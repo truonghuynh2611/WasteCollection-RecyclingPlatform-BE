@@ -51,5 +51,7 @@ namespace WasteReportApp.Repository
         {
             await _context.SaveChangesAsync();
         }
+        
+
     }
 }

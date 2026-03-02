@@ -9,6 +9,11 @@
         public string? ImageUrl { get; set; }
         public string Description { get; set; }
         public string WasteType { get; set; }
+        public int? CollectorId { get; set; }
+        public Collector? Collector { get; set; }
+        public string? CollectorImageUrl { get; set; }
+
+
         public decimal CitizenLatitude { get; set; }
         public decimal CitizenLongitude { get; set; }
         public decimal? CollectorLatitude { get; set; }

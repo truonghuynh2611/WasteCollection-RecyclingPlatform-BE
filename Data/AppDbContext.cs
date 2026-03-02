@@ -11,7 +11,8 @@ namespace WasteReportApp.Data
         public DbSet<WasteReport> WasteReports { get; set; }
         public DbSet<Area> Areas { get; set; }
         public DbSet<District> Districts { get; set; }
-
+        public DbSet<Collector> Collectors { get; set; }
+        public DbSet<Team> Teams { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Citizen>()

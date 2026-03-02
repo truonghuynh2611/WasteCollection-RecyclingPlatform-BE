@@ -12,5 +12,8 @@ namespace WasteReportApp.Models.Entities
         [JsonIgnore]
         public ICollection<WasteReport> WasteReports { get; set; }
 
+        [JsonIgnore]
+        public ICollection<Team> Teams { get; set; }
+
     }
 }

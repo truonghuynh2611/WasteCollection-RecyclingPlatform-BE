@@ -52,11 +52,35 @@ namespace WasteReportApp.Controllers
 
             return Ok(report);
         }
+        [HttpPost("assign/{id}")]
+        public async Task<IActionResult> Assign(int id)
+        {
+            await _wasteReportService.AssignReportAsync(id);
+            return Ok("Report assigned successfully");
+        }
+
+        // ===============================
+        // PROCESS REPORT (Collector)
+        // ===============================
+
+        [HttpPost("process")]
+        public async Task<IActionResult> Process(ProcessReportDto dto)
+        {
+            await _wasteReportService.ProcessReportAsync(
+                dto.ReportId,
+                dto.CollectorId,
+                dto.IsValid,
+                dto.CollectorImageUrl,
+                dto.Latitude,
+                dto.Longitude);
+
+            return Ok("Report processed successfully");
+        }
 
 
-         //=========================================
-         //5️⃣ DELETE REPORT
-         //=========================================
+        //=========================================
+        //5️⃣ DELETE REPORT
+        //=========================================
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
