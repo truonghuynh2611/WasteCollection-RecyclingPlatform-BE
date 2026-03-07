@@ -62,11 +62,17 @@ builder.Services.AddSwaggerGen(c =>
 // Configure Database - PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+<<<<<<< HEAD
 // Tạo DataSource và map enum với tên translator tùy chỉnh để chuyển lowercase DB <-> PascalCase C#
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString!);
 // DB stores lowercase ('admin','citizen'...) while C# uses PascalCase ('Admin','Citizen'...)
 // NpgsqlSnakeCaseNameTranslator handles this via toLower mapping
 dataSourceBuilder.MapEnum<UserRole>("user_role", nameTranslator: new Npgsql.NameTranslation.NpgsqlSnakeCaseNameTranslator());
+=======
+// Tạo DataSource và map enum với name translator để giữ nguyên case
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString!);
+dataSourceBuilder.MapEnum<UserRole>("user_role", nameTranslator: new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
+>>>>>>> 7c8b4ebc26e3f329a9474e114f446ddad48d1530
 
 var dataSource = dataSourceBuilder.Build();
 
@@ -178,6 +184,7 @@ using (var scope = app.Services.CreateScope())
             ADD COLUMN IF NOT EXISTS verificationtokenexpiry TIMESTAMP WITHOUT TIME ZONE,
             ADD COLUMN IF NOT EXISTS resetpasswordtoken VARCHAR(500),
             ADD COLUMN IF NOT EXISTS resettokenexpiry TIMESTAMP WITHOUT TIME ZONE;
+<<<<<<< HEAD
 
             -- Ensure manager role exists in enum
             DO $$ 
@@ -186,6 +193,8 @@ using (var scope = app.Services.CreateScope())
                     ALTER TYPE user_role ADD VALUE 'manager';
                 END IF;
             END $$;
+=======
+>>>>>>> 7c8b4ebc26e3f329a9474e114f446ddad48d1530
             
             CREATE INDEX IF NOT EXISTS idx_users_verificationtoken ON ""User""(verificationtoken) WHERE verificationtoken IS NOT NULL;
             CREATE INDEX IF NOT EXISTS idx_users_resetpasswordtoken ON ""User""(resetpasswordtoken) WHERE resetpasswordtoken IS NOT NULL;
@@ -285,6 +294,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
+<<<<<<< HEAD
             INSERT INTO team (areaid, name) 
             SELECT a.areaid, v.name
             FROM area a
@@ -302,6 +312,25 @@ using (var scope = app.Services.CreateScope())
                 ('Khu vực 9A', 'Team East'),
                 ('Khu vực 12A', 'Team West')
             ) AS v(areaname, name)
+=======
+            INSERT INTO team (areaid, name, teamtype) 
+            SELECT a.areaid, v.name, v.teamtype::team_type
+            FROM area a
+            INNER JOIN district d ON a.districtid = d.districtid, (VALUES
+                ('Khu vực 1A', 'Team Alpha', 'Main'),
+                ('Khu vực 1A', 'Team Beta', 'Support'),
+                ('Khu vực 1B', 'Team Gamma', 'Main'),
+                ('Khu vực 2A', 'Team Delta', 'Main'),
+                ('Khu vực 2A', 'Team Epsilon', 'Support'),
+                ('Khu vực 2B', 'Team Zeta', 'Main'),
+                ('Khu vực 3A', 'Team Eta', 'Main'),
+                ('Khu vực 4A', 'Team Theta', 'Main'),
+                ('Khu vực 7A', 'Team North', 'Main'),
+                ('Khu vực 7B', 'Team South', 'Main'),
+                ('Khu vực 9A', 'Team East', 'Support'),
+                ('Khu vực 12A', 'Team West', 'Main')
+            ) AS v(areaname, name, teamtype)
+>>>>>>> 7c8b4ebc26e3f329a9474e114f446ddad48d1530
             WHERE a.name = v.areaname
             AND NOT EXISTS (
                 SELECT 1 FROM team WHERE team.areaid = a.areaid AND team.name = v.name
@@ -313,6 +342,7 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"⚠️  Team seed failed (might already exist): {ex.Message}");
     }
+<<<<<<< HEAD
 
     // Seed Sample Users (Admin, Citizen, Collector)
     try
@@ -377,6 +407,8 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"⚠️  User seed failed: {ex.InnerException?.Message ?? ex.Message}");
     }
+=======
+>>>>>>> 7c8b4ebc26e3f329a9474e114f446ddad48d1530
 }
 
 // Configure the HTTP request pipeline

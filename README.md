@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🗑️ Waste Collection & Recycling Platform - Backend
 
 > **3-Layer Architecture** | **ASP.NET Core Web API** | **PostgreSQL** | **SignalR**
@@ -350,3 +351,7 @@ For questions or issues, please contact the team lead or create an issue in the 
 **Status:** In Development 🚧
 t e s t  
  
+=======
+# WasteCollection-RecyclingPlatform
+ Project gồm Backend .NET Core và Frontend React.
+>>>>>>> 7c8b4ebc26e3f329a9474e114f446ddad48d1530
