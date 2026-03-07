@@ -336,15 +336,15 @@ using (var scope = app.Services.CreateScope())
             // Insert Citizen
             await context.Database.ExecuteSqlRawAsync(
                 @"INSERT INTO ""User"" (fullname, email, phone, password, role, status, emailverified)
-                  SELECT 'Citizen', 'customer@example.com', '0900000002', {0}, 'citizen', true, true
-                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'customer@example.com')", 
+                  SELECT 'Citizen', 'citizen@example.com', '0900000002', {0}, 'citizen', true, true
+                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'citizen@example.com')", 
                 hashedPassword);
 
             // Insert Collector
             await context.Database.ExecuteSqlRawAsync(
                 @"INSERT INTO ""User"" (fullname, email, phone, password, role, status, emailverified)
-                  SELECT 'Collector', 'staff@example.com', '0900000003', {0}, 'collector', true, true
-                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'staff@example.com')", 
+                  SELECT 'Collector', 'collector@example.com', '0900000003', {0}, 'collector', true, true
+                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'collector@example.com')", 
                 hashedPassword);
 
             // Insert Manager
@@ -355,7 +355,7 @@ using (var scope = app.Services.CreateScope())
                 hashedPassword);
 
             // Fetch the inserted IDs and seed related tables
-            var citizenIdResult = await context.Users.Where(u => u.Email == "customer@example.com").Select(u => u.Userid).FirstOrDefaultAsync();
+            var citizenIdResult = await context.Users.Where(u => u.Email == "citizen@example.com").Select(u => u.Userid).FirstOrDefaultAsync();
             if (citizenIdResult > 0)
             {
                 var hasCitizen = await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM citizen WHERE userid = {0}", citizenIdResult);
@@ -363,7 +363,7 @@ using (var scope = app.Services.CreateScope())
                 await context.Database.ExecuteSqlRawAsync("INSERT INTO citizen (userid, totalpoints) SELECT {0}, 0 WHERE NOT EXISTS (SELECT 1 FROM citizen WHERE userid = {0})", citizenIdResult);
             }
 
-            var collectorIdResult = await context.Users.Where(u => u.Email == "staff@example.com").Select(u => u.Userid).FirstOrDefaultAsync();
+            var collectorIdResult = await context.Users.Where(u => u.Email == "collector@example.com").Select(u => u.Userid).FirstOrDefaultAsync();
             var firstTeamId = await context.Teams.Select(t => t.TeamId).FirstOrDefaultAsync();
             if (collectorIdResult > 0 && firstTeamId > 0)
             {
