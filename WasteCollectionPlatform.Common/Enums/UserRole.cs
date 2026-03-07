@@ -24,5 +24,10 @@ public enum UserRole
     /// <summary>
     /// System administrator
     /// </summary>
-    Admin = 3
+    Admin = 3,
+
+    /// <summary>
+    /// Area manager handling staffs and schedules
+    /// </summary>
+    Manager = 4
 }
