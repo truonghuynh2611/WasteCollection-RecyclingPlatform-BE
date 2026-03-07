@@ -62,9 +62,11 @@ builder.Services.AddSwaggerGen(c =>
 // Configure Database - PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Tạo DataSource và map enum với name translator để giữ nguyên case
+// Tạo DataSource và map enum với tên translator tùy chỉnh để chuyển lowercase DB <-> PascalCase C#
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString!);
-dataSourceBuilder.MapEnum<UserRole>("user_role", nameTranslator: new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
+// DB stores lowercase ('admin','citizen'...) while C# uses PascalCase ('Admin','Citizen'...)
+// NpgsqlSnakeCaseNameTranslator handles this via toLower mapping
+dataSourceBuilder.MapEnum<UserRole>("user_role", nameTranslator: new Npgsql.NameTranslation.NpgsqlSnakeCaseNameTranslator());
 
 var dataSource = dataSourceBuilder.Build();
 
@@ -176,6 +178,14 @@ using (var scope = app.Services.CreateScope())
             ADD COLUMN IF NOT EXISTS verificationtokenexpiry TIMESTAMP WITHOUT TIME ZONE,
             ADD COLUMN IF NOT EXISTS resetpasswordtoken VARCHAR(500),
             ADD COLUMN IF NOT EXISTS resettokenexpiry TIMESTAMP WITHOUT TIME ZONE;
+
+            -- Ensure manager role exists in enum
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'user_role' AND e.enumlabel = 'manager') THEN
+                    ALTER TYPE user_role ADD VALUE 'manager';
+                END IF;
+            END $$;
             
             CREATE INDEX IF NOT EXISTS idx_users_verificationtoken ON ""User""(verificationtoken) WHERE verificationtoken IS NOT NULL;
             CREATE INDEX IF NOT EXISTS idx_users_resetpasswordtoken ON ""User""(resetpasswordtoken) WHERE resetpasswordtoken IS NOT NULL;
@@ -275,23 +285,23 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO team (areaid, name, teamtype) 
-            SELECT a.areaid, v.name, v.teamtype::team_type
+            INSERT INTO team (areaid, name) 
+            SELECT a.areaid, v.name
             FROM area a
             INNER JOIN district d ON a.districtid = d.districtid, (VALUES
-                ('Khu vực 1A', 'Team Alpha', 'Main'),
-                ('Khu vực 1A', 'Team Beta', 'Support'),
-                ('Khu vực 1B', 'Team Gamma', 'Main'),
-                ('Khu vực 2A', 'Team Delta', 'Main'),
-                ('Khu vực 2A', 'Team Epsilon', 'Support'),
-                ('Khu vực 2B', 'Team Zeta', 'Main'),
-                ('Khu vực 3A', 'Team Eta', 'Main'),
-                ('Khu vực 4A', 'Team Theta', 'Main'),
-                ('Khu vực 7A', 'Team North', 'Main'),
-                ('Khu vực 7B', 'Team South', 'Main'),
-                ('Khu vực 9A', 'Team East', 'Support'),
-                ('Khu vực 12A', 'Team West', 'Main')
-            ) AS v(areaname, name, teamtype)
+                ('Khu vực 1A', 'Team Alpha'),
+                ('Khu vực 1A', 'Team Beta'),
+                ('Khu vực 1B', 'Team Gamma'),
+                ('Khu vực 2A', 'Team Delta'),
+                ('Khu vực 2A', 'Team Epsilon'),
+                ('Khu vực 2B', 'Team Zeta'),
+                ('Khu vực 3A', 'Team Eta'),
+                ('Khu vực 4A', 'Team Theta'),
+                ('Khu vực 7A', 'Team North'),
+                ('Khu vực 7B', 'Team South'),
+                ('Khu vực 9A', 'Team East'),
+                ('Khu vực 12A', 'Team West')
+            ) AS v(areaname, name)
             WHERE a.name = v.areaname
             AND NOT EXISTS (
                 SELECT 1 FROM team WHERE team.areaid = a.areaid AND team.name = v.name
@@ -302,6 +312,70 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Console.WriteLine($"⚠️  Team seed failed (might already exist): {ex.Message}");
+    }
+
+    // Seed Sample Users (Admin, Citizen, Collector)
+    try
+    {
+        var userCount = await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM \"User\" LIMIT 1");
+        // ExecuteSqlRawAsync returns number of affected rows, but for SELECT it's not reliable.
+        var hasUsers = await context.Users.AnyAsync();
+        
+        if (!hasUsers)
+        {
+            var defaultPassword = "password123";
+            var hashedPassword = WasteCollectionPlatform.Common.Helpers.PasswordHasher.HashPassword(defaultPassword);
+
+            // Insert Admin
+            await context.Database.ExecuteSqlRawAsync(
+                @"INSERT INTO ""User"" (fullname, email, phone, password, role, status, emailverified) 
+                  SELECT 'System Admin', 'admin@example.com', '0900000001', {0}, 'admin', true, true
+                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'admin@example.com')", 
+                hashedPassword);
+
+            // Insert Citizen
+            await context.Database.ExecuteSqlRawAsync(
+                @"INSERT INTO ""User"" (fullname, email, phone, password, role, status, emailverified)
+                  SELECT 'Citizen', 'customer@example.com', '0900000002', {0}, 'citizen', true, true
+                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'customer@example.com')", 
+                hashedPassword);
+
+            // Insert Collector
+            await context.Database.ExecuteSqlRawAsync(
+                @"INSERT INTO ""User"" (fullname, email, phone, password, role, status, emailverified)
+                  SELECT 'Collector', 'staff@example.com', '0900000003', {0}, 'collector', true, true
+                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'staff@example.com')", 
+                hashedPassword);
+
+            // Insert Manager
+            await context.Database.ExecuteSqlRawAsync(
+                @"INSERT INTO ""User"" (fullname, email, phone, password, role, status, emailverified)
+                  SELECT 'Area Manager', 'manager@example.com', '0900000004', {0}, 'manager', true, true
+                  WHERE NOT EXISTS (SELECT 1 FROM ""User"" WHERE email = 'manager@example.com')", 
+                hashedPassword);
+
+            // Fetch the inserted IDs and seed related tables
+            var citizenIdResult = await context.Users.Where(u => u.Email == "customer@example.com").Select(u => u.Userid).FirstOrDefaultAsync();
+            if (citizenIdResult > 0)
+            {
+                var hasCitizen = await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM citizen WHERE userid = {0}", citizenIdResult);
+                // ExecuteSqlRawAsync returning count is tricky for SELECT, but let's just use raw check
+                await context.Database.ExecuteSqlRawAsync("INSERT INTO citizen (userid, totalpoints) SELECT {0}, 0 WHERE NOT EXISTS (SELECT 1 FROM citizen WHERE userid = {0})", citizenIdResult);
+            }
+
+            var collectorIdResult = await context.Users.Where(u => u.Email == "staff@example.com").Select(u => u.Userid).FirstOrDefaultAsync();
+            var firstTeamId = await context.Teams.Select(t => t.TeamId).FirstOrDefaultAsync();
+            if (collectorIdResult > 0 && firstTeamId > 0)
+            {
+                await context.Database.ExecuteSqlRawAsync("INSERT INTO collector (userid, teamid, status, currenttaskcount) SELECT {0}, {1}, true, 0 WHERE NOT EXISTS (SELECT 1 FROM collector WHERE userid = {0})", collectorIdResult, firstTeamId);
+            }
+
+            Console.WriteLine("✅ Sample Users (Admin, Citizen, Staff, Manager) data seeded safely");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️  User seed failed: {ex.InnerException?.Message ?? ex.Message}");
     }
 }
 
