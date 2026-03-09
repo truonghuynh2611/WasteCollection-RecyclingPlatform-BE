@@ -12,7 +12,7 @@ using WasteReportApp.Data;
 namespace WasteReportApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260301230247_InitialCreate")]
+    [Migration("20260309042058_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -66,6 +66,37 @@ namespace WasteReportApp.Migrations
                     b.ToTable("Citizens");
                 });
 
+            modelBuilder.Entity("WasteReportApp.Models.Entities.Collector", b =>
+                {
+                    b.Property<int>("CollectorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CollectorId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CollectorId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Collectors");
+                });
+
             modelBuilder.Entity("WasteReportApp.Models.Entities.District", b =>
                 {
                     b.Property<int>("DistrictId")
@@ -81,6 +112,34 @@ namespace WasteReportApp.Migrations
                     b.HasKey("DistrictId");
 
                     b.ToTable("Districts");
+                });
+
+            modelBuilder.Entity("WasteReportApp.Models.Entities.Team", b =>
+                {
+                    b.Property<int>("TeamId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TeamId"));
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CurrentTaskCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TeamType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TeamId");
+
+                    b.HasIndex("AreaId");
+
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("WasteReportApp.Models.Entities.WasteReport", b =>
@@ -103,6 +162,12 @@ namespace WasteReportApp.Migrations
                     b.Property<decimal>("CitizenLongitude")
                         .HasColumnType("numeric");
 
+                    b.Property<int?>("CollectorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CollectorImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<decimal?>("CollectorLatitude")
                         .HasColumnType("numeric");
 
@@ -119,7 +184,13 @@ namespace WasteReportApp.Migrations
                     b.Property<DateTime>("ExpireTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TeamId")
                         .HasColumnType("integer");
 
                     b.Property<string>("WasteType")
@@ -131,6 +202,10 @@ namespace WasteReportApp.Migrations
                     b.HasIndex("AreaId");
 
                     b.HasIndex("CitizenId");
+
+                    b.HasIndex("CollectorId");
+
+                    b.HasIndex("TeamId");
 
                     b.ToTable("WasteReports");
                 });
@@ -144,6 +219,28 @@ namespace WasteReportApp.Migrations
                         .IsRequired();
 
                     b.Navigation("District");
+                });
+
+            modelBuilder.Entity("WasteReportApp.Models.Entities.Collector", b =>
+                {
+                    b.HasOne("WasteReportApp.Models.Entities.Team", "Team")
+                        .WithMany("Collectors")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("WasteReportApp.Models.Entities.Team", b =>
+                {
+                    b.HasOne("WasteReportApp.Models.Entities.Area", "Area")
+                        .WithMany("Teams")
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Area");
                 });
 
             modelBuilder.Entity("WasteReportApp.Models.Entities.WasteReport", b =>
@@ -160,13 +257,25 @@ namespace WasteReportApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("WasteReportApp.Models.Entities.Collector", null)
+                        .WithMany("WasteReports")
+                        .HasForeignKey("CollectorId");
+
+                    b.HasOne("WasteReportApp.Models.Entities.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId");
+
                     b.Navigation("Area");
 
                     b.Navigation("Citizen");
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("WasteReportApp.Models.Entities.Area", b =>
                 {
+                    b.Navigation("Teams");
+
                     b.Navigation("WasteReports");
                 });
 
@@ -175,9 +284,19 @@ namespace WasteReportApp.Migrations
                     b.Navigation("WasteReports");
                 });
 
+            modelBuilder.Entity("WasteReportApp.Models.Entities.Collector", b =>
+                {
+                    b.Navigation("WasteReports");
+                });
+
             modelBuilder.Entity("WasteReportApp.Models.Entities.District", b =>
                 {
                     b.Navigation("Areas");
+                });
+
+            modelBuilder.Entity("WasteReportApp.Models.Entities.Team", b =>
+                {
+                    b.Navigation("Collectors");
                 });
 #pragma warning restore 612, 618
         }

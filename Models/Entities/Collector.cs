@@ -9,9 +9,12 @@ namespace WasteReportApp.Models.Entities
 
         public int TeamId { get; set; }
         public Team Team { get; set; }
+        public string Name { get; set; }
 
+
+        public CollectorRole Role { get; set; }
         public bool Status { get; set; }
-        public int CurrentTaskCount { get; set; }
+     
 
         [JsonIgnore]
         public ICollection<WasteReport> WasteReports { get; set; }

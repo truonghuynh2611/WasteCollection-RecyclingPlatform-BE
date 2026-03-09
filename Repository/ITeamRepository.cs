@@ -8,6 +8,8 @@ namespace WasteReportApp.Repository
         Task<Team?> GetTeamWithCollectorsAsync(int areaId, TeamType type);
         Task AddAsync(Team team);
         Task SaveChangesAsync();
-        
+        Task<Team?> GetByIdWithCollectorsAsync(int teamId);
+        Task UpdateAsync(Team team);
+
     }
 }

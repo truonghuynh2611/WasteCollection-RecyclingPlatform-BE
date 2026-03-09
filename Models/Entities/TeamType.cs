@@ -2,7 +2,7 @@
 {
     public enum TeamType
     {
-        PRIMARY =0,
-        SUPPORT =1
+        PRIMARY =1,
+        SUPPORT =2
     }
 }

@@ -71,7 +71,11 @@ namespace WasteReportApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CollectorId"));
 
-                    b.Property<int>("CurrentTaskCount")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Role")
                         .HasColumnType("integer");
 
                     b.Property<bool>("Status")
@@ -116,6 +120,9 @@ namespace WasteReportApp.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TeamId"));
 
                     b.Property<int>("AreaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CurrentTaskCount")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -180,6 +187,9 @@ namespace WasteReportApp.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("TeamId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("WasteType")
                         .IsRequired()
                         .HasColumnType("text");
@@ -191,6 +201,8 @@ namespace WasteReportApp.Migrations
                     b.HasIndex("CitizenId");
 
                     b.HasIndex("CollectorId");
+
+                    b.HasIndex("TeamId");
 
                     b.ToTable("WasteReports");
                 });
@@ -242,15 +254,19 @@ namespace WasteReportApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WasteReportApp.Models.Entities.Collector", "Collector")
+                    b.HasOne("WasteReportApp.Models.Entities.Collector", null)
                         .WithMany("WasteReports")
                         .HasForeignKey("CollectorId");
+
+                    b.HasOne("WasteReportApp.Models.Entities.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId");
 
                     b.Navigation("Area");
 
                     b.Navigation("Citizen");
 
-                    b.Navigation("Collector");
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("WasteReportApp.Models.Entities.Area", b =>

@@ -38,5 +38,18 @@ namespace WasteReportApp.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Team?> GetByIdWithCollectorsAsync(int teamId)
+        {
+            return await _context.Teams
+                .Include(t => t.Collectors)
+                .FirstOrDefaultAsync(t => t.TeamId == teamId);
+        }
+
+        public async Task UpdateAsync(Team team)
+        {
+            _context.Teams.Update(team);
+            await _context.SaveChangesAsync();
+        }
     }
 }

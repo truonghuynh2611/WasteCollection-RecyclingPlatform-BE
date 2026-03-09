@@ -10,6 +10,8 @@ namespace WasteReportApp.Models.Entities
         public string Name { get; set; }
         public TeamType TeamType { get; set; }   // nếu DB là enum thì ta chỉnh lại
 
+        public int CurrentTaskCount { get; set; } = 0;
+
         public Area Area { get; set; }
 
         [JsonIgnore]

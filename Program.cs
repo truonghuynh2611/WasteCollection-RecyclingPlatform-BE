@@ -19,6 +19,7 @@ builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<IWasteReportService, WasteReportService>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<ICollectorRepository, CollectorRepository>();
+builder.Services.AddHttpClient<IWasteReportService, WasteReportService>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

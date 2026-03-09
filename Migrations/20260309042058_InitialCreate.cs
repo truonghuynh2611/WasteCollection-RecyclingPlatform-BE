@@ -60,6 +60,51 @@ namespace WasteReportApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Teams",
+                columns: table => new
+                {
+                    TeamId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AreaId = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    TeamType = table.Column<int>(type: "integer", nullable: false),
+                    CurrentTaskCount = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Teams", x => x.TeamId);
+                    table.ForeignKey(
+                        name: "FK_Teams_Areas_AreaId",
+                        column: x => x.AreaId,
+                        principalTable: "Areas",
+                        principalColumn: "AreaId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Collectors",
+                columns: table => new
+                {
+                    CollectorId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    TeamId = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Collectors", x => x.CollectorId);
+                    table.ForeignKey(
+                        name: "FK_Collectors_Teams_TeamId",
+                        column: x => x.TeamId,
+                        principalTable: "Teams",
+                        principalColumn: "TeamId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "WasteReports",
                 columns: table => new
                 {
@@ -67,15 +112,19 @@ namespace WasteReportApp.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CitizenId = table.Column<int>(type: "integer", nullable: false),
                     AreaId = table.Column<int>(type: "integer", nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: false),
                     WasteType = table.Column<string>(type: "text", nullable: false),
+                    TeamId = table.Column<int>(type: "integer", nullable: true),
+                    CollectorImageUrl = table.Column<string>(type: "text", nullable: true),
                     CitizenLatitude = table.Column<decimal>(type: "numeric", nullable: false),
                     CitizenLongitude = table.Column<decimal>(type: "numeric", nullable: false),
                     CollectorLatitude = table.Column<decimal>(type: "numeric", nullable: true),
                     CollectorLongitude = table.Column<decimal>(type: "numeric", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpireTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ExpireTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CollectorId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -92,12 +141,32 @@ namespace WasteReportApp.Migrations
                         principalTable: "Citizens",
                         principalColumn: "CitizenId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WasteReports_Collectors_CollectorId",
+                        column: x => x.CollectorId,
+                        principalTable: "Collectors",
+                        principalColumn: "CollectorId");
+                    table.ForeignKey(
+                        name: "FK_WasteReports_Teams_TeamId",
+                        column: x => x.TeamId,
+                        principalTable: "Teams",
+                        principalColumn: "TeamId");
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Areas_DistrictId",
                 table: "Areas",
                 column: "DistrictId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Collectors_TeamId",
+                table: "Collectors",
+                column: "TeamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Teams_AreaId",
+                table: "Teams",
+                column: "AreaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WasteReports_AreaId",
@@ -108,6 +177,16 @@ namespace WasteReportApp.Migrations
                 name: "IX_WasteReports_CitizenId",
                 table: "WasteReports",
                 column: "CitizenId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WasteReports_CollectorId",
+                table: "WasteReports",
+                column: "CollectorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WasteReports_TeamId",
+                table: "WasteReports",
+                column: "TeamId");
         }
 
         /// <inheritdoc />
@@ -117,10 +196,16 @@ namespace WasteReportApp.Migrations
                 name: "WasteReports");
 
             migrationBuilder.DropTable(
-                name: "Areas");
+                name: "Citizens");
 
             migrationBuilder.DropTable(
-                name: "Citizens");
+                name: "Collectors");
+
+            migrationBuilder.DropTable(
+                name: "Teams");
+
+            migrationBuilder.DropTable(
+                name: "Areas");
 
             migrationBuilder.DropTable(
                 name: "Districts");
