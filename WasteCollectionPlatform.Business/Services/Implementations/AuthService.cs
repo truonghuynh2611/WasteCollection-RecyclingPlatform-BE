@@ -64,7 +64,7 @@ public class AuthService : IAuthService
             user.Email, 
             user.Fullname, 
             user.Role.ToString(), 
-            user.Status.ToString()
+            user.Status?.ToString() ?? "false"
         );
         var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
         
@@ -179,23 +179,11 @@ public class AuthService : IAuthService
                     break;
             }
             
-            await _unitOfWork.CommitTransactionAsync();
-            
-            // Generate JWT access token
-            var token = _jwtHelper.GenerateToken(
-                user.Userid, 
-                user.Email, 
-                user.Fullname, 
-                user.Role.ToString(), 
-                user.Status.ToString()
-            );
-            var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
-            
-            // Generate refresh token (30 days)
+            // Generate refresh token (30 days) - BEFORE committing transaction
             var refreshToken = RefreshTokenHelper.GenerateRefreshToken();
             var refreshTokenExpiration = RefreshTokenHelper.CalculateExpirationDate(30);
             
-            // Save refresh token to database
+            // Save refresh token to database - INSIDE transaction
             var refreshTokenEntity = new DataAccess.Entities.RefreshToken
             {
                 Userid = user.Userid,
@@ -206,7 +194,20 @@ public class AuthService : IAuthService
             };
             
             await _unitOfWork.RefreshTokens.AddAsync(refreshTokenEntity);
+            
+            // Save all changes (role-specific entity + refresh token) and commit transaction
             await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitTransactionAsync();
+            
+            // Generate JWT access token (after successful transaction)
+            var token = _jwtHelper.GenerateToken(
+                user.Userid, 
+                user.Email, 
+                user.Fullname, 
+                user.Role.ToString(), 
+                user.Status?.ToString() ?? "false"
+            );
+            var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
             
             // Send verification email (async, don't wait)
             _ = Task.Run(async () =>
@@ -303,7 +304,7 @@ public class AuthService : IAuthService
             user.Email, 
             user.Fullname, 
             user.Role.ToString(), 
-            user.Status.ToString()
+            user.Status?.ToString() ?? "false"
         );
         var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
         

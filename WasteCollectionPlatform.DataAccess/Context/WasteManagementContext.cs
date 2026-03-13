@@ -54,13 +54,13 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Areaid).HasName("area_pkey");
 
-            entity.ToTable("area");
+            entity.ToTable("Areas");
 
-            entity.Property(e => e.Areaid).HasColumnName("areaid");
-            entity.Property(e => e.Districtid).HasColumnName("districtid");
+            entity.Property(e => e.Areaid).HasColumnName("AreaId");
+            entity.Property(e => e.Districtid).HasColumnName("DistrictId");
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
-                .HasColumnName("name");
+                .HasColumnName("Name");
 
             entity.HasOne(d => d.District).WithMany(p => p.Areas)
                 .HasForeignKey(d => d.Districtid)
@@ -71,15 +71,15 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Citizenid).HasName("citizen_pkey");
 
-            entity.ToTable("citizen");
+            entity.ToTable("Citizens");
 
             entity.HasIndex(e => e.Userid, "citizen_userid_key").IsUnique();
 
-            entity.Property(e => e.Citizenid).HasColumnName("citizenid");
+            entity.Property(e => e.Citizenid).HasColumnName("CitizenId");
             entity.Property(e => e.Totalpoints)
                 .HasDefaultValue(0)
-                .HasColumnName("totalpoints");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasColumnName("TotalPoints");
+            entity.Property(e => e.Userid).HasColumnName("UserId");
 
             entity.HasOne(d => d.User).WithOne(p => p.Citizen)
                 .HasForeignKey<Citizen>(d => d.Userid)
@@ -90,19 +90,19 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Collectorid).HasName("collector_pkey");
 
-            entity.ToTable("collector");
+            entity.ToTable("Collectors");
 
             entity.HasIndex(e => e.Userid, "collector_userid_key").IsUnique();
 
-            entity.Property(e => e.Collectorid).HasColumnName("collectorid");
+            entity.Property(e => e.Collectorid).HasColumnName("CollectorId");
             entity.Property(e => e.Currenttaskcount)
                 .HasDefaultValue(0)
-                .HasColumnName("currenttaskcount");
+                .HasColumnName("CurrentTaskCount");
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
-                .HasColumnName("status");
-            entity.Property(e => e.TeamId).HasColumnName("teamid");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasColumnName("Status");
+            entity.Property(e => e.TeamId).HasColumnName("TeamId");
+            entity.Property(e => e.Userid).HasColumnName("UserId");
 
             entity.HasOne(d => d.Team).WithMany(p => p.Collectors)
                 .HasForeignKey(d => d.TeamId)
@@ -117,31 +117,31 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Districtid).HasName("district_pkey");
 
-            entity.ToTable("district");
+            entity.ToTable("Districts");
 
-            entity.Property(e => e.Districtid).HasColumnName("districtid");
+            entity.Property(e => e.Districtid).HasColumnName("DistrictId");
             entity.Property(e => e.Districtname)
                 .HasMaxLength(150)
-                .HasColumnName("districtname");
+                .HasColumnName("DistrictName");
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.HasKey(e => e.Notificationid).HasName("notification_pkey");
 
-            entity.ToTable("notification");
+            entity.ToTable("Notifications");
 
-            entity.Property(e => e.Notificationid).HasColumnName("notificationid");
+            entity.Property(e => e.Notificationid).HasColumnName("NotificationId");
             entity.Property(e => e.Createdat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
+                .HasColumnName("CreatedAt");
             entity.Property(e => e.Isread)
                 .HasDefaultValue(false)
-                .HasColumnName("isread");
-            entity.Property(e => e.Message).HasColumnName("message");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasColumnName("IsRead");
+            entity.Property(e => e.Message).HasColumnName("Message");
+            entity.Property(e => e.Reportid).HasColumnName("ReportId");
+            entity.Property(e => e.Userid).HasColumnName("UserId");
 
             entity.HasOne(d => d.Report).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.Reportid)
@@ -157,17 +157,17 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Pointlogid).HasName("pointhistory_pkey");
 
-            entity.ToTable("pointhistory");
+            entity.ToTable("PointHistories");
 
-            entity.Property(e => e.Pointlogid).HasColumnName("pointlogid");
-            entity.Property(e => e.Citizenid).HasColumnName("citizenid");
+            entity.Property(e => e.Pointlogid).HasColumnName("PointLogId");
+            entity.Property(e => e.Citizenid).HasColumnName("CitizenId");
             entity.Property(e => e.Createdat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
-            entity.Property(e => e.Pointamount).HasColumnName("pointamount");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.Voucherid).HasColumnName("voucherid");
+                .HasColumnName("CreatedAt");
+            entity.Property(e => e.Pointamount).HasColumnName("PointAmount");
+            entity.Property(e => e.Reportid).HasColumnName("ReportId");
+            entity.Property(e => e.Voucherid).HasColumnName("VoucherId");
 
             entity.HasOne(d => d.Citizen).WithMany(p => p.Pointhistories)
                 .HasForeignKey(d => d.Citizenid)
@@ -188,11 +188,11 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Assignmentid).HasName("reportassignment_pkey");
 
-            entity.ToTable("reportassignment");
+            entity.ToTable("ReportAssignments");
 
-            entity.Property(e => e.Assignmentid).HasColumnName("assignmentid");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.TeamId).HasColumnName("teamid");
+            entity.Property(e => e.Assignmentid).HasColumnName("AssignmentId");
+            entity.Property(e => e.Reportid).HasColumnName("ReportId");
+            entity.Property(e => e.TeamId).HasColumnName("TeamId");
 
             entity.HasOne(d => d.Report).WithMany(p => p.Reportassignments)
                 .HasForeignKey(d => d.Reportid)
@@ -207,11 +207,11 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Imageid).HasName("reportimage_pkey");
 
-            entity.ToTable("reportimage");
+            entity.ToTable("ReportImages");
 
-            entity.Property(e => e.Imageid).HasColumnName("imageid");
-            entity.Property(e => e.Imageurl).HasColumnName("imageurl");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
+            entity.Property(e => e.Imageid).HasColumnName("ImageId");
+            entity.Property(e => e.Imageurl).HasColumnName("ImageUrl");
+            entity.Property(e => e.Reportid).HasColumnName("ReportId");
 
             entity.HasOne(d => d.Report).WithMany(p => p.Reportimages)
                 .HasForeignKey(d => d.Reportid)
@@ -222,13 +222,13 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.TeamId).HasName("team_pkey");
 
-            entity.ToTable("team");
+            entity.ToTable("Teams");
 
-            entity.Property(e => e.TeamId).HasColumnName("teamid");
-            entity.Property(e => e.Areaid).HasColumnName("areaid");
+            entity.Property(e => e.TeamId).HasColumnName("TeamId");
+            entity.Property(e => e.Areaid).HasColumnName("AreaId");
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
-                .HasColumnName("name");
+                .HasColumnName("Name");
 
             entity.HasOne(d => d.Area).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.Areaid)
@@ -239,79 +239,92 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.Userid).HasName("User_pkey");
 
-            entity.ToTable("User");
+            entity.ToTable("Users");
 
             entity.HasIndex(e => e.Email, "User_email_key").IsUnique();
 
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasColumnName("UserId");
             entity.Property(e => e.Email)
                 .HasMaxLength(150)
-                .HasColumnName("email");
+                .HasColumnName("Email");
             entity.Property(e => e.Fullname)
                 .HasMaxLength(150)
-                .HasColumnName("fullname");
+                .HasColumnName("FullName");
             entity.Property(e => e.Password)
                 .HasMaxLength(255)
-                .HasColumnName("password");
+                .HasColumnName("Password");
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
-                .HasColumnName("phone");
+                .HasColumnName("Phone");
             entity.Property(e => e.Role)
-                .HasColumnName("role");
+                .HasColumnName("Role");
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
-                .HasColumnName("status");
+                .HasColumnName("Status");
+            entity.Property(e => e.Emailverified)
+                .HasDefaultValue(false)
+                .HasColumnName("EmailVerified");
+            entity.Property(e => e.Verificationtoken)
+                .HasMaxLength(500)
+                .HasColumnName("VerificationToken");
+            entity.Property(e => e.Verificationtokenexpiry)
+                .HasColumnName("VerificationTokenExpiry");
+            entity.Property(e => e.Resetpasswordtoken)
+                .HasMaxLength(500)
+                .HasColumnName("ResetPasswordToken");
+            entity.Property(e => e.Resettokenexpiry)
+                .HasColumnName("ResetTokenExpiry");
         });
 
         modelBuilder.Entity<Voucher>(entity =>
         {
             entity.HasKey(e => e.Voucherid).HasName("voucher_pkey");
 
-            entity.ToTable("voucher");
+            entity.ToTable("Vouchers");
 
-            entity.Property(e => e.Voucherid).HasColumnName("voucherid");
-            entity.Property(e => e.Pointsrequired).HasColumnName("pointsrequired");
+            entity.Property(e => e.Voucherid).HasColumnName("VoucherId");
+            entity.Property(e => e.Pointsrequired).HasColumnName("PointsRequired");
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
-                .HasColumnName("status");
-            entity.Property(e => e.Stockquantity).HasColumnName("stockquantity");
+                .HasColumnName("Status");
+            entity.Property(e => e.Stockquantity).HasColumnName("StockQuantity");
             entity.Property(e => e.Vouchername)
                 .HasMaxLength(150)
-                .HasColumnName("vouchername");
+                .HasColumnName("VoucherName");
         });
 
         modelBuilder.Entity<Wastereport>(entity =>
         {
             entity.HasKey(e => e.Reportid).HasName("wastereport_pkey");
 
-            entity.ToTable("wastereport");
+            entity.ToTable("WasteReports");
 
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.Areaid).HasColumnName("areaid");
-            entity.Property(e => e.Citizenid).HasColumnName("citizenid");
+            entity.Property(e => e.Reportid).HasColumnName("ReportId");
+            entity.Property(e => e.Areaid).HasColumnName("AreaId");
+            entity.Property(e => e.Citizenid).HasColumnName("CitizenId");
             entity.Property(e => e.Citizenlatitude)
                 .HasPrecision(10, 8)
-                .HasColumnName("citizenlatitude");
+                .HasColumnName("CitizenLatitude");
             entity.Property(e => e.Citizenlongitude)
                 .HasPrecision(11, 8)
-                .HasColumnName("citizenlongitude");
+                .HasColumnName("CitizenLongitude");
             entity.Property(e => e.Collectorlatitude)
                 .HasPrecision(10, 8)
-                .HasColumnName("collectorlatitude");
+                .HasColumnName("CollectorLatitude");
             entity.Property(e => e.Collectorlongitude)
                 .HasPrecision(11, 8)
-                .HasColumnName("collectorlongitude");
+                .HasColumnName("CollectorLongitude");
             entity.Property(e => e.Createdat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
-            entity.Property(e => e.Description).HasColumnName("description");
+                .HasColumnName("CreatedAt");
+            entity.Property(e => e.Description).HasColumnName("Description");
             entity.Property(e => e.Expiretime)
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("expiretime");
+                .HasColumnName("ExpireTime");
             entity.Property(e => e.Wastetype)
                 .HasMaxLength(100)
-                .HasColumnName("wastetype");
+                .HasColumnName("WasteType");
 
             entity.HasOne(d => d.Area).WithMany(p => p.Wastereports)
                 .HasForeignKey(d => d.Areaid)
