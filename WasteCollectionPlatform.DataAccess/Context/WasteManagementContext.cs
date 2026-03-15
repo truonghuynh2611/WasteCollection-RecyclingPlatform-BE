@@ -25,11 +25,11 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Notification> Notifications { get; set; }
 
-    public virtual DbSet<Pointhistory> Pointhistories { get; set; }
+    public virtual DbSet<PointHistory> PointHistories { get; set; }
 
-    public virtual DbSet<Reportassignment> Reportassignments { get; set; }
+    public virtual DbSet<ReportAssignment> ReportAssignments { get; set; }
 
-    public virtual DbSet<Reportimage> Reportimages { get; set; }
+    public virtual DbSet<ReportImage> ReportImages { get; set; }
 
     public virtual DbSet<Team> Teams { get; set; }
 
@@ -37,7 +37,7 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
-    public virtual DbSet<Wastereport> Wastereports { get; set; }
+    public virtual DbSet<WasteReport> WasteReports { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
@@ -153,7 +153,7 @@ public partial class WasteManagementContext : DbContext
                 .HasConstraintName("fk_notification_user");
         });
 
-        modelBuilder.Entity<Pointhistory>(entity =>
+        modelBuilder.Entity<PointHistory>(entity =>
         {
             entity.HasKey(e => e.Pointlogid).HasName("pointhistory_pkey");
 
@@ -169,22 +169,22 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Reportid).HasColumnName("ReportId");
             entity.Property(e => e.Voucherid).HasColumnName("VoucherId");
 
-            entity.HasOne(d => d.Citizen).WithMany(p => p.Pointhistories)
+            entity.HasOne(d => d.Citizen).WithMany(p => p.PointHistories)
                 .HasForeignKey(d => d.Citizenid)
                 .HasConstraintName("fk_point_citizen");
 
-            entity.HasOne(d => d.Report).WithMany(p => p.Pointhistories)
+            entity.HasOne(d => d.Report).WithMany(p => p.PointHistories)
                 .HasForeignKey(d => d.Reportid)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_point_report");
 
-            entity.HasOne(d => d.Voucher).WithMany(p => p.Pointhistories)
+            entity.HasOne(d => d.Voucher).WithMany(p => p.PointHistories)
                 .HasForeignKey(d => d.Voucherid)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_point_voucher");
         });
 
-        modelBuilder.Entity<Reportassignment>(entity =>
+        modelBuilder.Entity<ReportAssignment>(entity =>
         {
             entity.HasKey(e => e.Assignmentid).HasName("reportassignment_pkey");
 
@@ -194,16 +194,16 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Reportid).HasColumnName("ReportId");
             entity.Property(e => e.TeamId).HasColumnName("TeamId");
 
-            entity.HasOne(d => d.Report).WithMany(p => p.Reportassignments)
+            entity.HasOne(d => d.Report).WithMany(p => p.ReportAssignments)
                 .HasForeignKey(d => d.Reportid)
                 .HasConstraintName("fk_assignment_report");
 
-            entity.HasOne(d => d.Team).WithMany(p => p.Reportassignments)
+            entity.HasOne(d => d.Team).WithMany(p => p.ReportAssignments)
                 .HasForeignKey(d => d.TeamId)
                 .HasConstraintName("fk_assignment_team");
         });
 
-        modelBuilder.Entity<Reportimage>(entity =>
+        modelBuilder.Entity<ReportImage>(entity =>
         {
             entity.HasKey(e => e.Imageid).HasName("reportimage_pkey");
 
@@ -213,7 +213,7 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Imageurl).HasColumnName("ImageUrl");
             entity.Property(e => e.Reportid).HasColumnName("ReportId");
 
-            entity.HasOne(d => d.Report).WithMany(p => p.Reportimages)
+            entity.HasOne(d => d.Report).WithMany(p => p.ReportImages)
                 .HasForeignKey(d => d.Reportid)
                 .HasConstraintName("fk_image_report");
         });
@@ -293,7 +293,7 @@ public partial class WasteManagementContext : DbContext
                 .HasColumnName("VoucherName");
         });
 
-        modelBuilder.Entity<Wastereport>(entity =>
+        modelBuilder.Entity<WasteReport>(entity =>
         {
             entity.HasKey(e => e.Reportid).HasName("wastereport_pkey");
 
@@ -326,11 +326,11 @@ public partial class WasteManagementContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("WasteType");
 
-            entity.HasOne(d => d.Area).WithMany(p => p.Wastereports)
+            entity.HasOne(d => d.Area).WithMany(p => p.WasteReports)
                 .HasForeignKey(d => d.Areaid)
                 .HasConstraintName("fk_report_area");
 
-            entity.HasOne(d => d.Citizen).WithMany(p => p.Wastereports)
+            entity.HasOne(d => d.Citizen).WithMany(p => p.WasteReports)
                 .HasForeignKey(d => d.Citizenid)
                 .HasConstraintName("fk_report_citizen");
         });

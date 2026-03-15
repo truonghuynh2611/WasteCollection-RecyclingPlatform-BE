@@ -17,5 +17,5 @@ public partial class Team
 
     public virtual ICollection<Collector> Collectors { get; set; } = new List<Collector>();
 
-    public virtual ICollection<Reportassignment> Reportassignments { get; set; } = new List<Reportassignment>();
+    public virtual ICollection<ReportAssignment> ReportAssignments { get; set; } = new List<ReportAssignment>();
 }

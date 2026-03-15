@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace WasteCollectionPlatform.DataAccess.Entities;
 
-public partial class Wastereport
+public partial class WasteReport
 {
     public int Reportid { get; set; }
 
@@ -33,9 +33,9 @@ public partial class Wastereport
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
-    public virtual ICollection<Pointhistory> Pointhistories { get; set; } = new List<Pointhistory>();
+    public virtual ICollection<PointHistory> PointHistories { get; set; } = new List<PointHistory>();
 
-    public virtual ICollection<Reportassignment> Reportassignments { get; set; } = new List<Reportassignment>();
+    public virtual ICollection<ReportAssignment> ReportAssignments { get; set; } = new List<ReportAssignment>();
 
-    public virtual ICollection<Reportimage> Reportimages { get; set; } = new List<Reportimage>();
+    public virtual ICollection<ReportImage> ReportImages { get; set; } = new List<ReportImage>();
 }

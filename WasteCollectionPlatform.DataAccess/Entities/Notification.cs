@@ -17,7 +17,7 @@ public partial class Notification
 
     public bool? Isread { get; set; }
 
-    public virtual Wastereport? Report { get; set; }
+    public virtual WasteReport? Report { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

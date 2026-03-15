@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace WasteCollectionPlatform.DataAccess.Entities;
 
-public partial class Pointhistory
+public partial class PointHistory
 {
     public int Pointlogid { get; set; }
 
@@ -19,7 +19,7 @@ public partial class Pointhistory
 
     public virtual Citizen Citizen { get; set; } = null!;
 
-    public virtual Wastereport? Report { get; set; }
+    public virtual WasteReport? Report { get; set; }
 
     public virtual Voucher? Voucher { get; set; }
 }

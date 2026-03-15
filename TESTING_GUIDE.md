@@ -551,5 +551,4 @@ Nếu gặp vấn đề:
 
 **Files quan trọng:**
 - [API_ENDPOINTS.md](API_ENDPOINTS.md) - Full API documentation
-- [PRODUCTION_SOLUTION.md](PRODUCTION_SOLUTION.md) - Production deployment guide
-- [DEBUG_RESULT_FOUND_ROOT_CAUSE.md](DEBUG_RESULT_FOUND_ROOT_CAUSE.md) - Troubleshooting guide
+

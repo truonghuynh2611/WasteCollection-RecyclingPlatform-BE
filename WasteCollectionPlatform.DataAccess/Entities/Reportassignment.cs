@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WasteCollectionPlatform.DataAccess.Entities;
 
-public partial class Reportassignment
+public partial class ReportAssignment
 {
     public int Assignmentid { get; set; }
 
@@ -13,7 +13,7 @@ public partial class Reportassignment
     [Column("teamid")]
     public int TeamId { get; set; }
 
-    public virtual Wastereport Report { get; set; } = null!;
+    public virtual WasteReport Report { get; set; } = null!;
 
     public virtual Team Team { get; set; } = null!;
 }

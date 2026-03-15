@@ -11,9 +11,9 @@ public partial class Citizen
 
     public int? Totalpoints { get; set; }
 
-    public virtual ICollection<Pointhistory> Pointhistories { get; set; } = new List<Pointhistory>();
+    public virtual ICollection<PointHistory> PointHistories { get; set; } = new List<PointHistory>();
 
     public virtual User User { get; set; } = null!;
 
-    public virtual ICollection<Wastereport> Wastereports { get; set; } = new List<Wastereport>();
+    public virtual ICollection<WasteReport> WasteReports { get; set; } = new List<WasteReport>();
 }

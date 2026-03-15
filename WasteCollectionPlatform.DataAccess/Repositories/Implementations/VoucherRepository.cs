@@ -15,7 +15,7 @@ public class VoucherRepository : GenericRepository<Voucher>, IVoucherRepository
     {
         // PostgreSQL schema: Vouchers are linked to citizens via Pointhistory
         // Get vouchers that this citizen has redeemed
-        var pointHistories = await _context.Pointhistories
+        var pointHistories = await _context.PointHistories
             .Where(ph => ph.Citizenid == citizenId && ph.Voucherid != null)
             .Include(ph => ph.Voucher)
             .OrderByDescending(ph => ph.Createdat)

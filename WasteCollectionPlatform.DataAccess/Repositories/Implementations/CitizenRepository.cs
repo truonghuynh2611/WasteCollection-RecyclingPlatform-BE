@@ -24,8 +24,8 @@ public class CitizenRepository : GenericRepository<Citizen>, ICitizenRepository
     {
         return await _dbSet
             .Include(c => c.User)
-            .Include(c => c.Wastereports)
-            .Include(c => c.Pointhistories)
+            .Include(c => c.WasteReports)
+            .Include(c => c.PointHistories)
             .FirstOrDefaultAsync(c => c.Citizenid == citizenId);
     }
 }

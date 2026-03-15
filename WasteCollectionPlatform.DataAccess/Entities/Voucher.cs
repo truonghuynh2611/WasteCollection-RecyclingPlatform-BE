@@ -15,5 +15,5 @@ public partial class Voucher
 
     public int Stockquantity { get; set; }
 
-    public virtual ICollection<Pointhistory> Pointhistories { get; set; } = new List<Pointhistory>();
+    public virtual ICollection<PointHistory> PointHistories { get; set; } = new List<PointHistory>();
 }
