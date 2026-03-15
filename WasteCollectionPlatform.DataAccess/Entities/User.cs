@@ -7,9 +7,9 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class User
 {
-    public int Userid { get; set; }
+    public int UserId { get; set; }
 
-    public string Fullname { get; set; } = null!;
+    public string FullName { get; set; } = null!;
 
     public string Email { get; set; } = null!;
 

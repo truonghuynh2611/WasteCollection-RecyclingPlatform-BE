@@ -13,21 +13,21 @@ public class EnterpriseConfiguration : IEntityTypeConfiguration<Enterprise>
     {
         builder.ToTable("enterprise");
 
-        builder.HasKey(e => e.Enterpriseid)
+        builder.HasKey(e => e.EnterpriseId)
             .HasName("enterprise_pkey");
 
-        builder.HasIndex(e => e.Userid, "enterprise_userid_key")
+        builder.HasIndex(e => e.UserId, "enterprise_userid_key")
             .IsUnique();
 
-        builder.Property(e => e.Enterpriseid)
+        builder.Property(e => e.EnterpriseId)
             .HasColumnName("enterpriseid")
             .UseIdentityAlwaysColumn();
 
-        builder.Property(e => e.Userid)
+        builder.Property(e => e.UserId)
             .IsRequired()
             .HasColumnName("userid");
 
-        builder.Property(e => e.Districtid)
+        builder.Property(e => e.DistrictId)
             .HasColumnName("districtid");
 
         builder.Property(e => e.Wastetypes)
@@ -48,13 +48,13 @@ public class EnterpriseConfiguration : IEntityTypeConfiguration<Enterprise>
         // Foreign key relationships
         builder.HasOne(d => d.User)
             .WithOne()
-            .HasForeignKey<Enterprise>(d => d.Userid)
+            .HasForeignKey<Enterprise>(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("fk_enterprise_user");
 
         builder.HasOne(d => d.District)
             .WithMany()
-            .HasForeignKey(d => d.Districtid)
+            .HasForeignKey(d => d.DistrictId)
             .OnDelete(DeleteBehavior.SetNull)
             .HasConstraintName("fk_enterprise_district");
     }

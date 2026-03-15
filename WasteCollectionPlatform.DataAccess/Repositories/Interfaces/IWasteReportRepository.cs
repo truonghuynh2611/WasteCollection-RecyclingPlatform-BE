@@ -9,4 +9,10 @@ public interface IWasteReportRepository : IGenericRepository<WasteReport>
 {
     Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId);
     Task<IEnumerable<WasteReport>> GetByCollectorIdAsync(int collectorId);
+    new Task<IEnumerable<WasteReport>> GetAllAsync();
+    new Task<WasteReport?> GetByIdAsync(int id);
+    new Task<WasteReport> AddAsync(WasteReport wasteReport);
+    new Task UpdateAsync(WasteReport wasteReport);
+    new Task DeleteAsync(WasteReport wasteReport);
+    Task SaveChangesAsync();
 }

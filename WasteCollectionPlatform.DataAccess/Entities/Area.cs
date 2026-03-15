@@ -5,9 +5,9 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class Area
 {
-    public int Areaid { get; set; }
+    public int AreaId { get; set; }
 
-    public int Districtid { get; set; }
+    public int DistrictId { get; set; }
 
     public string Name { get; set; } = null!;
 

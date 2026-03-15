@@ -6,9 +6,9 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class ReportAssignment
 {
-    public int Assignmentid { get; set; }
+    public int AssignmentId { get; set; }
 
-    public int Reportid { get; set; }
+    public int ReportId { get; set; }
 
     [Column("teamid")]
     public int TeamId { get; set; }

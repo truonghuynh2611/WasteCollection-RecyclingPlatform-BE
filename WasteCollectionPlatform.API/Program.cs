@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,7 +22,11 @@ using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // Configure Swagger with JWT support
@@ -125,16 +130,20 @@ builder.Services.AddScoped<ICitizenRepository, CitizenRepository>();
 builder.Services.AddScoped<ICollectorRepository, CollectorRepository>();
 builder.Services.AddScoped<IEnterpriseRepository, EnterpriseRepository>();
 builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
+builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IWasteReportRepository, WasteReportRepository>();
+builder.Services.AddScoped<IReportImageRepository, ReportImageRepository>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IPointHistoryRepository, PointHistoryRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IWasteReportService, WasteReportService>();
 // Add other services here as they are implemented
 
 // Register FluentValidation

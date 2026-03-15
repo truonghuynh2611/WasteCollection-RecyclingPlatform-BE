@@ -1,31 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
+using WasteCollectionPlatform.Common.Enums;
 
 namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class WasteReport
 {
-    public int Reportid { get; set; }
+    public int ReportId { get; set; }
 
-    public int Citizenid { get; set; }
+    public int CitizenId { get; set; }
 
-    public int Areaid { get; set; }
+    public int AreaId { get; set; }
 
     public string? Description { get; set; }
 
-    public string? Wastetype { get; set; }
+    public string? WasteType { get; set; }
 
-    public decimal? Citizenlatitude { get; set; }
+    public decimal? CitizenLatitude { get; set; }
 
-    public decimal? Citizenlongitude { get; set; }
+    public decimal? CitizenLongitude { get; set; }
 
-    public decimal? Collectorlatitude { get; set; }
+    public decimal? CollectorLatitude { get; set; }
 
-    public decimal? Collectorlongitude { get; set; }
+    public decimal? CollectorLongitude { get; set; }
 
-    public DateTime? Createdat { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
-    public DateTime? Expiretime { get; set; }
+    public DateTime? ExpireTime { get; set; }
+
+    public ReportStatus Status { get; set; }
+
+    public int? TeamId { get; set; }
 
     public virtual Area Area { get; set; } = null!;
 

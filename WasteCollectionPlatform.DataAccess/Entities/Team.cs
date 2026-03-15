@@ -9,9 +9,11 @@ public partial class Team
     [Column("teamid")]
     public int TeamId { get; set; }
 
-    public int Areaid { get; set; }
+    public int AreaId { get; set; }
 
     public string Name { get; set; } = null!;
+
+    public int CurrentTaskCount { get; set; }
 
     public virtual Area Area { get; set; } = null!;
 

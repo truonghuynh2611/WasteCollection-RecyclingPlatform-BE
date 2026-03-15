@@ -5,11 +5,11 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class Citizen
 {
-    public int Citizenid { get; set; }
+    public int CitizenId { get; set; }
 
-    public int Userid { get; set; }
+    public int UserId { get; set; }
 
-    public int? Totalpoints { get; set; }
+    public int? TotalPoints { get; set; }
 
     public virtual ICollection<PointHistory> PointHistories { get; set; } = new List<PointHistory>();
 

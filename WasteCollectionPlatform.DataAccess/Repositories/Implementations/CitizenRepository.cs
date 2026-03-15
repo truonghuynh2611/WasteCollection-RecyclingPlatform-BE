@@ -17,7 +17,7 @@ public class CitizenRepository : GenericRepository<Citizen>, ICitizenRepository
     public async Task<Citizen?> GetByUserIdAsync(int userId)
     {
         return await _dbSet
-            .FirstOrDefaultAsync(c => c.Userid == userId);
+            .FirstOrDefaultAsync(c => c.UserId == userId);
     }
     
     public async Task<Citizen?> GetByIdWithDetailsAsync(int citizenId)
@@ -26,6 +26,6 @@ public class CitizenRepository : GenericRepository<Citizen>, ICitizenRepository
             .Include(c => c.User)
             .Include(c => c.WasteReports)
             .Include(c => c.PointHistories)
-            .FirstOrDefaultAsync(c => c.Citizenid == citizenId);
+            .FirstOrDefaultAsync(c => c.CitizenId == citizenId);
     }
 }

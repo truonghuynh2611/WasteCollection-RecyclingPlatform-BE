@@ -15,14 +15,14 @@ public class RefreshToken
     /// </summary>
     [Key]
     [Column("refreshtokenid")]
-    public int Refreshtokenid { get; set; }
+    public int RefreshtokenId { get; set; }
 
     /// <summary>
     /// User ID
     /// </summary>
     [Required]
     [Column("userid")]
-    public int Userid { get; set; }
+    public int UserId { get; set; }
 
     /// <summary>
     /// Refresh token value (GUID)
@@ -44,7 +44,7 @@ public class RefreshToken
     /// </summary>
     [Required]
     [Column("createdat")]
-    public DateTime Createdat { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// Is token revoked (for logout/security)
@@ -61,6 +61,6 @@ public class RefreshToken
     /// <summary>
     /// Navigation property to User
     /// </summary>
-    [ForeignKey(nameof(Userid))]
+    [ForeignKey(nameof(UserId))]
     public virtual User User { get; set; } = null!;
 }
