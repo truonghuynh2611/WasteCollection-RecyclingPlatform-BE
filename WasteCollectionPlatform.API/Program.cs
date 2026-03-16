@@ -246,28 +246,32 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"⚠️  District seed failed (might already exist): {ex.Message}");
     }
     
-    // Seed Area data
+    // Seed Area data (Wards) for key districts
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
             INSERT INTO area (districtid, name) 
-            SELECT districtid, v.name
+            SELECT d.districtid, v.name
             FROM district d, (VALUES
-                ('Quận 1', 'Khu vực 1A'),
-                ('Quận 1', 'Khu vực 1B'),
-                ('Quận 2', 'Khu vực 2A'),
-                ('Quận 2', 'Khu vực 2B'),
-                ('Quận 3', 'Khu vực 3A'),
-                ('Quận 4', 'Khu vực 4A'),
-                ('Quận 5', 'Khu vực 5A'),
-                ('Quận 6', 'Khu vực 6A'),
-                ('Quận 7', 'Khu vực 7A'),
-                ('Quận 7', 'Khu vực 7B'),
-                ('Quận 8', 'Khu vực 8A'),
-                ('Quận 9', 'Khu vực 9A'),
-                ('Quận 10', 'Khu vực 10A'),
-                ('Quận 11', 'Khu vực 11A'),
-                ('Quận 12', 'Khu vực 12A')
+                ('Quận 1', 'Phường Bến Nghé'), ('Quận 1', 'Phường Bến Thành'), ('Quận 1', 'Phường Cầu Kho'), 
+                ('Quận 1', 'Phường Cầu Ông Lãnh'), ('Quận 1', 'Phường Cô Giang'), ('Quận 1', 'Phường Đa Kao'),
+                ('Quận 1', 'Phường Nguyễn Cư Trinh'), ('Quận 1', 'Phường Nguyễn Thái Bình'), ('Quận 1', 'Phường Phạm Ngũ Lão'),
+                ('Quận 1', 'Phường Tân Định'),
+                
+                ('Quận 3', 'Võ Thị Sáu'), ('Quận 3', 'Phường 1'), ('Quận 3', 'Phường 2'), ('Quận 3', 'Phường 3'),
+                ('Quận 3', 'Phường 4'), ('Quận 3', 'Phường 5'), ('Quận 3', 'Phường 9'), ('Quận 3', 'Phường 10'),
+                
+                ('Quận 5', 'Phường 1'), ('Quận 5', 'Phường 2'), ('Quận 5', 'Phường 3'), ('Quận 5', 'Phường 4'),
+                ('Quận 5', 'Phường 5'), ('Quận 5', 'Phường 6'), ('Quận 5', 'Phường 7'), ('Quận 5', 'Phường 8'),
+                
+                ('Quận 10', 'Phường 1'), ('Quận 10', 'Phường 2'), ('Quận 10', 'Phường 4'), ('Quận 10', 'Phường 5'),
+                ('Quận 10', 'Phường 6'), ('Quận 10', 'Phường 7'), ('Quận 10', 'Phường 8'), ('Quận 10', 'Phường 9'),
+                
+                ('Tân Bình', 'Phường 1'), ('Tân Bình', 'Phường 2'), ('Tân Bình', 'Phường 3'), ('Tân Bình', 'Phường 4'),
+                ('Tân Bình', 'Phường 5'), ('Tân Bình', 'Phường 6'), ('Tân Bình', 'Phường 7'), ('Tân Bình', 'Phường 8'),
+                
+                ('Bình Thạnh', 'Phường 1'), ('Bình Thạnh', 'Phường 2'), ('Bình Thạnh', 'Phường 3'), ('Bình Thạnh', 'Phường 5'),
+                ('Bình Thạnh', 'Phường 6'), ('Bình Thạnh', 'Phường 7'), ('Bình Thạnh', 'Phường 11'), ('Bình Thạnh', 'Phường 12')
             ) AS v(districtname, name)
             WHERE d.districtname = v.districtname
             AND NOT EXISTS (
