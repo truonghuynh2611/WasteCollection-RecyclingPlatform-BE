@@ -5,7 +5,7 @@ namespace WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 /// <summary>
 /// Point history repository interface
 /// </summary>
-public interface IPointHistoryRepository : IGenericRepository<Pointhistory>
+public interface IPointHistoryRepository : IGenericRepository<PointHistory>
 {
-    Task<IEnumerable<Pointhistory>> GetByCitizenIdAsync(int citizenId);
+    Task<IEnumerable<PointHistory>> GetByCitizenIdAsync(int citizenId);
 }

@@ -37,15 +37,15 @@ public class CitizenController : ControllerBase
             
             var citizenDtos = citizens.Select(c =>
             {
-                var user = users.FirstOrDefault(u => u.Userid == c.Userid);
+                var user = users.FirstOrDefault(u => u.UserId == c.UserId);
                 return new
                 {
-                    citizenId = c.Citizenid,
-                    userId = c.Userid,
+                    citizenId = c.CitizenId,
+                    userId = c.UserId,
                     email = user?.Email ?? "N/A",
-                    fullName = user?.Fullname ?? "N/A",
+                    fullName = user?.FullName ?? "N/A",
                     phone = user?.Phone ?? "N/A",
-                    totalPoints = c.Totalpoints ?? 0,
+                    totalPoints = c.TotalPoints ?? 0,
                     status = user?.Status ?? false
                 };
             }).OrderBy(c => c.userId).ToList();
@@ -96,12 +96,12 @@ public class CitizenController : ControllerBase
 
             var citizenDto = new
             {
-                citizenId = citizen.Citizenid,
-                userId = citizen.Userid,
+                citizenId = citizen.CitizenId,
+                userId = citizen.UserId,
                 email = user?.Email ?? "N/A",
-                fullName = user?.Fullname ?? "N/A",
+                fullName = user?.FullName ?? "N/A",
                 phone = user?.Phone ?? "N/A",
-                totalPoints = citizen.Totalpoints ?? 0,
+                totalPoints = citizen.TotalPoints ?? 0,
                 status = user?.Status ?? false
             };
 
@@ -140,7 +140,7 @@ public class CitizenController : ControllerBase
             {
                 totalCitizens = citizens.Count(),
                 activeCitizens = citizens.Count(c => c.User != null && c.User.Status == true),
-                totalPoints = citizens.Sum(c => c.Totalpoints ?? 0)
+                totalPoints = citizens.Sum(c => c.TotalPoints ?? 0)
             };
 
             return Ok(new ApiResponse<object>

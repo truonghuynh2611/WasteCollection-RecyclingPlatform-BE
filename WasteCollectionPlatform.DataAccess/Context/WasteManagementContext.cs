@@ -25,11 +25,11 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Notification> Notifications { get; set; }
 
-    public virtual DbSet<Pointhistory> Pointhistories { get; set; }
+    public virtual DbSet<PointHistory> PointHistories { get; set; }
 
-    public virtual DbSet<Reportassignment> Reportassignments { get; set; }
+    public virtual DbSet<ReportAssignment> ReportAssignments { get; set; }
 
-    public virtual DbSet<Reportimage> Reportimages { get; set; }
+    public virtual DbSet<ReportImage> ReportImages { get; set; }
 
     public virtual DbSet<Team> Teams { get; set; }
 
@@ -37,7 +37,7 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
-    public virtual DbSet<Wastereport> Wastereports { get; set; }
+    public virtual DbSet<WasteReport> WasteReports { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
@@ -46,175 +46,176 @@ public partial class WasteManagementContext : DbContext
         modelBuilder
             .HasPostgresEnum("image_type", new[] { "Citizen", "Collector" })
             .HasPostgresEnum("point_transaction_type", new[] { "Earn", "Redeem" })
-            .HasPostgresEnum("report_status", new[] { "Pending", "Accepted", "Assigned", "OnTheWay", "Collected", "Failed" })
+            .HasPostgresEnum("report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled" })
             .HasPostgresEnum("team_type", new[] { "Main", "Support" })
-            .HasPostgresEnum<UserRole>("user_role");
+            .HasPostgresEnum<UserRole>("user_role")
+            .HasPostgresEnum<CollectorRole>("collector_role");
 
         modelBuilder.Entity<Area>(entity =>
         {
-            entity.HasKey(e => e.Areaid).HasName("area_pkey");
+            entity.HasKey(e => e.AreaId).HasName("area_pkey");
 
-            entity.ToTable("area");
+            entity.ToTable("Areas");
 
-            entity.Property(e => e.Areaid).HasColumnName("areaid");
-            entity.Property(e => e.Districtid).HasColumnName("districtid");
+            entity.Property(e => e.AreaId).HasColumnName("AreaId");
+            entity.Property(e => e.DistrictId).HasColumnName("DistrictId");
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
-                .HasColumnName("name");
+                .HasColumnName("Name");
 
             entity.HasOne(d => d.District).WithMany(p => p.Areas)
-                .HasForeignKey(d => d.Districtid)
+                .HasForeignKey(d => d.DistrictId)
                 .HasConstraintName("fk_area_district");
         });
 
         modelBuilder.Entity<Citizen>(entity =>
         {
-            entity.HasKey(e => e.Citizenid).HasName("citizen_pkey");
+            entity.HasKey(e => e.CitizenId).HasName("citizen_pkey");
 
-            entity.ToTable("citizen");
+            entity.ToTable("Citizens");
 
-            entity.HasIndex(e => e.Userid, "citizen_userid_key").IsUnique();
+            entity.HasIndex(e => e.UserId, "citizen_userid_key").IsUnique();
 
-            entity.Property(e => e.Citizenid).HasColumnName("citizenid");
-            entity.Property(e => e.Totalpoints)
+            entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
+            entity.Property(e => e.TotalPoints)
                 .HasDefaultValue(0)
-                .HasColumnName("totalpoints");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasColumnName("TotalPoints");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
 
             entity.HasOne(d => d.User).WithOne(p => p.Citizen)
-                .HasForeignKey<Citizen>(d => d.Userid)
+                .HasForeignKey<Citizen>(d => d.UserId)
                 .HasConstraintName("fk_citizen_user");
         });
 
         modelBuilder.Entity<Collector>(entity =>
         {
-            entity.HasKey(e => e.Collectorid).HasName("collector_pkey");
+            entity.HasKey(e => e.CollectorId).HasName("collector_pkey");
 
-            entity.ToTable("collector");
+            entity.ToTable("Collectors");
 
-            entity.HasIndex(e => e.Userid, "collector_userid_key").IsUnique();
+            entity.HasIndex(e => e.UserId, "collector_userid_key").IsUnique();
 
-            entity.Property(e => e.Collectorid).HasColumnName("collectorid");
-            entity.Property(e => e.Currenttaskcount)
-                .HasDefaultValue(0)
-                .HasColumnName("currenttaskcount");
+            entity.Property(e => e.CollectorId).HasColumnName("CollectorId");
+            entity.Property(e => e.Role)
+                .HasColumnName("Role")
+                .HasDefaultValue(CollectorRole.Member);
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
-                .HasColumnName("status");
-            entity.Property(e => e.TeamId).HasColumnName("teamid");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasColumnName("Status");
+            entity.Property(e => e.TeamId).HasColumnName("TeamId");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
 
             entity.HasOne(d => d.Team).WithMany(p => p.Collectors)
                 .HasForeignKey(d => d.TeamId)
                 .HasConstraintName("fk_collector_team");
 
             entity.HasOne(d => d.User).WithOne(p => p.Collector)
-                .HasForeignKey<Collector>(d => d.Userid)
+                .HasForeignKey<Collector>(d => d.UserId)
                 .HasConstraintName("fk_collector_user");
         });
 
         modelBuilder.Entity<District>(entity =>
         {
-            entity.HasKey(e => e.Districtid).HasName("district_pkey");
+            entity.HasKey(e => e.DistrictId).HasName("district_pkey");
 
-            entity.ToTable("district");
+            entity.ToTable("Districts");
 
-            entity.Property(e => e.Districtid).HasColumnName("districtid");
-            entity.Property(e => e.Districtname)
+            entity.Property(e => e.DistrictId).HasColumnName("DistrictId");
+            entity.Property(e => e.DistrictName)
                 .HasMaxLength(150)
-                .HasColumnName("districtname");
+                .HasColumnName("DistrictName");
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.Notificationid).HasName("notification_pkey");
+            entity.HasKey(e => e.NotificationId).HasName("notification_pkey");
 
-            entity.ToTable("notification");
+            entity.ToTable("Notifications");
 
-            entity.Property(e => e.Notificationid).HasColumnName("notificationid");
-            entity.Property(e => e.Createdat)
+            entity.Property(e => e.NotificationId).HasColumnName("NotificationId");
+            entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
+                .HasColumnName("CreatedAt");
             entity.Property(e => e.Isread)
                 .HasDefaultValue(false)
-                .HasColumnName("isread");
-            entity.Property(e => e.Message).HasColumnName("message");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasColumnName("IsRead");
+            entity.Property(e => e.Message).HasColumnName("Message");
+            entity.Property(e => e.ReportId).HasColumnName("ReportId");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
 
             entity.HasOne(d => d.Report).WithMany(p => p.Notifications)
-                .HasForeignKey(d => d.Reportid)
+                .HasForeignKey(d => d.ReportId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_notification_report");
 
             entity.HasOne(d => d.User).WithMany(p => p.Notifications)
-                .HasForeignKey(d => d.Userid)
+                .HasForeignKey(d => d.UserId)
                 .HasConstraintName("fk_notification_user");
         });
 
-        modelBuilder.Entity<Pointhistory>(entity =>
+        modelBuilder.Entity<PointHistory>(entity =>
         {
-            entity.HasKey(e => e.Pointlogid).HasName("pointhistory_pkey");
+            entity.HasKey(e => e.PointlogId).HasName("pointhistory_pkey");
 
-            entity.ToTable("pointhistory");
+            entity.ToTable("PointHistories");
 
-            entity.Property(e => e.Pointlogid).HasColumnName("pointlogid");
-            entity.Property(e => e.Citizenid).HasColumnName("citizenid");
-            entity.Property(e => e.Createdat)
+            entity.Property(e => e.PointlogId).HasColumnName("PointLogId");
+            entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
+            entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
-            entity.Property(e => e.Pointamount).HasColumnName("pointamount");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.Voucherid).HasColumnName("voucherid");
+                .HasColumnName("CreatedAt");
+            entity.Property(e => e.PointAmount).HasColumnName("PointAmount");
+            entity.Property(e => e.ReportId).HasColumnName("ReportId");
+            entity.Property(e => e.VoucherId).HasColumnName("VoucherId");
 
-            entity.HasOne(d => d.Citizen).WithMany(p => p.Pointhistories)
-                .HasForeignKey(d => d.Citizenid)
+            entity.HasOne(d => d.Citizen).WithMany(p => p.PointHistories)
+                .HasForeignKey(d => d.CitizenId)
                 .HasConstraintName("fk_point_citizen");
 
-            entity.HasOne(d => d.Report).WithMany(p => p.Pointhistories)
-                .HasForeignKey(d => d.Reportid)
+            entity.HasOne(d => d.Report).WithMany(p => p.PointHistories)
+                .HasForeignKey(d => d.ReportId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_point_report");
 
-            entity.HasOne(d => d.Voucher).WithMany(p => p.Pointhistories)
-                .HasForeignKey(d => d.Voucherid)
+            entity.HasOne(d => d.Voucher).WithMany(p => p.PointHistories)
+                .HasForeignKey(d => d.VoucherId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_point_voucher");
         });
 
-        modelBuilder.Entity<Reportassignment>(entity =>
+        modelBuilder.Entity<ReportAssignment>(entity =>
         {
-            entity.HasKey(e => e.Assignmentid).HasName("reportassignment_pkey");
+            entity.HasKey(e => e.AssignmentId).HasName("reportassignment_pkey");
 
-            entity.ToTable("reportassignment");
+            entity.ToTable("ReportAssignments");
 
-            entity.Property(e => e.Assignmentid).HasColumnName("assignmentid");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.TeamId).HasColumnName("teamid");
+            entity.Property(e => e.AssignmentId).HasColumnName("AssignmentId");
+            entity.Property(e => e.ReportId).HasColumnName("ReportId");
+            entity.Property(e => e.TeamId).HasColumnName("TeamId");
 
-            entity.HasOne(d => d.Report).WithMany(p => p.Reportassignments)
-                .HasForeignKey(d => d.Reportid)
+            entity.HasOne(d => d.Report).WithMany(p => p.ReportAssignments)
+                .HasForeignKey(d => d.ReportId)
                 .HasConstraintName("fk_assignment_report");
 
-            entity.HasOne(d => d.Team).WithMany(p => p.Reportassignments)
+            entity.HasOne(d => d.Team).WithMany(p => p.ReportAssignments)
                 .HasForeignKey(d => d.TeamId)
                 .HasConstraintName("fk_assignment_team");
         });
 
-        modelBuilder.Entity<Reportimage>(entity =>
+        modelBuilder.Entity<ReportImage>(entity =>
         {
-            entity.HasKey(e => e.Imageid).HasName("reportimage_pkey");
+            entity.HasKey(e => e.ImageId).HasName("reportimage_pkey");
 
-            entity.ToTable("reportimage");
+            entity.ToTable("ReportImages");
 
-            entity.Property(e => e.Imageid).HasColumnName("imageid");
-            entity.Property(e => e.Imageurl).HasColumnName("imageurl");
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
+            entity.Property(e => e.ImageId).HasColumnName("ImageId");
+            entity.Property(e => e.Imageurl).HasColumnName("ImageUrl");
+            entity.Property(e => e.ReportId).HasColumnName("ReportId");
 
-            entity.HasOne(d => d.Report).WithMany(p => p.Reportimages)
-                .HasForeignKey(d => d.Reportid)
+            entity.HasOne(d => d.Report).WithMany(p => p.ReportImages)
+                .HasForeignKey(d => d.ReportId)
                 .HasConstraintName("fk_image_report");
         });
 
@@ -222,103 +223,123 @@ public partial class WasteManagementContext : DbContext
         {
             entity.HasKey(e => e.TeamId).HasName("team_pkey");
 
-            entity.ToTable("team");
+            entity.ToTable("Teams");
 
-            entity.Property(e => e.TeamId).HasColumnName("teamid");
-            entity.Property(e => e.Areaid).HasColumnName("areaid");
+            entity.Property(e => e.TeamId).HasColumnName("TeamId");
+            entity.Property(e => e.AreaId).HasColumnName("AreaId");
+            entity.Property(e => e.CurrentTaskCount)
+                .HasDefaultValue(0)
+                .HasColumnName("CurrentTaskCount");
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
-                .HasColumnName("name");
+                .HasColumnName("Name");
 
             entity.HasOne(d => d.Area).WithMany(p => p.Teams)
-                .HasForeignKey(d => d.Areaid)
+                .HasForeignKey(d => d.AreaId)
                 .HasConstraintName("fk_team_area");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Userid).HasName("User_pkey");
+            entity.HasKey(e => e.UserId).HasName("User_pkey");
 
-            entity.ToTable("User");
+            entity.ToTable("Users");
 
             entity.HasIndex(e => e.Email, "User_email_key").IsUnique();
 
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
             entity.Property(e => e.Email)
                 .HasMaxLength(150)
-                .HasColumnName("email");
-            entity.Property(e => e.Fullname)
+                .HasColumnName("Email");
+            entity.Property(e => e.FullName)
                 .HasMaxLength(150)
-                .HasColumnName("fullname");
+                .HasColumnName("FullName");
             entity.Property(e => e.Password)
                 .HasMaxLength(255)
-                .HasColumnName("password");
+                .HasColumnName("Password");
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
-                .HasColumnName("phone");
+                .HasColumnName("Phone");
             entity.Property(e => e.Role)
-                .HasColumnName("role");
+                .HasColumnName("Role");
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
-                .HasColumnName("status");
+                .HasColumnName("Status");
+            entity.Property(e => e.Emailverified)
+                .HasDefaultValue(false)
+                .HasColumnName("EmailVerified");
+            entity.Property(e => e.Verificationtoken)
+                .HasMaxLength(500)
+                .HasColumnName("VerificationToken");
+            entity.Property(e => e.Verificationtokenexpiry)
+                .HasColumnName("VerificationTokenExpiry");
+            entity.Property(e => e.Resetpasswordtoken)
+                .HasMaxLength(500)
+                .HasColumnName("ResetPasswordToken");
+            entity.Property(e => e.Resettokenexpiry)
+                .HasColumnName("ResetTokenExpiry");
         });
 
         modelBuilder.Entity<Voucher>(entity =>
         {
-            entity.HasKey(e => e.Voucherid).HasName("voucher_pkey");
+            entity.HasKey(e => e.VoucherId).HasName("voucher_pkey");
 
-            entity.ToTable("voucher");
+            entity.ToTable("Vouchers");
 
-            entity.Property(e => e.Voucherid).HasColumnName("voucherid");
-            entity.Property(e => e.Pointsrequired).HasColumnName("pointsrequired");
+            entity.Property(e => e.VoucherId).HasColumnName("VoucherId");
+            entity.Property(e => e.PointsRequired).HasColumnName("PointsRequired");
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
-                .HasColumnName("status");
-            entity.Property(e => e.Stockquantity).HasColumnName("stockquantity");
-            entity.Property(e => e.Vouchername)
+                .HasColumnName("Status");
+            entity.Property(e => e.StockQuantity).HasColumnName("StockQuantity");
+            entity.Property(e => e.VoucherName)
                 .HasMaxLength(150)
-                .HasColumnName("vouchername");
+                .HasColumnName("VoucherName");
         });
 
-        modelBuilder.Entity<Wastereport>(entity =>
+        modelBuilder.Entity<WasteReport>(entity =>
         {
-            entity.HasKey(e => e.Reportid).HasName("wastereport_pkey");
+            entity.HasKey(e => e.ReportId).HasName("wastereport_pkey");
 
-            entity.ToTable("wastereport");
+            entity.ToTable("WasteReports");
 
-            entity.Property(e => e.Reportid).HasColumnName("reportid");
-            entity.Property(e => e.Areaid).HasColumnName("areaid");
-            entity.Property(e => e.Citizenid).HasColumnName("citizenid");
-            entity.Property(e => e.Citizenlatitude)
+            entity.Property(e => e.ReportId).HasColumnName("ReportId");
+            entity.Property(e => e.AreaId).HasColumnName("AreaId");
+            entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
+            entity.Property(e => e.CitizenLatitude)
                 .HasPrecision(10, 8)
-                .HasColumnName("citizenlatitude");
-            entity.Property(e => e.Citizenlongitude)
+                .HasColumnName("CitizenLatitude");
+            entity.Property(e => e.CitizenLongitude)
                 .HasPrecision(11, 8)
-                .HasColumnName("citizenlongitude");
-            entity.Property(e => e.Collectorlatitude)
+                .HasColumnName("CitizenLongitude");
+            entity.Property(e => e.CollectorLatitude)
                 .HasPrecision(10, 8)
-                .HasColumnName("collectorlatitude");
-            entity.Property(e => e.Collectorlongitude)
+                .HasColumnName("CollectorLatitude");
+            entity.Property(e => e.CollectorLongitude)
                 .HasPrecision(11, 8)
-                .HasColumnName("collectorlongitude");
-            entity.Property(e => e.Createdat)
+                .HasColumnName("CollectorLongitude");
+            entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.Expiretime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("expiretime");
-            entity.Property(e => e.Wastetype)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("CreatedAt");
+            entity.Property(e => e.Description).HasColumnName("Description");
+            entity.Property(e => e.ExpireTime)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("ExpireTime");
+            entity.Property(e => e.Status)
+                .HasColumnName("Status");
+            entity.Property(e => e.TeamId)
+                .HasColumnName("TeamId");
+            entity.Property(e => e.WasteType)
                 .HasMaxLength(100)
-                .HasColumnName("wastetype");
+                .HasColumnName("WasteType");
 
-            entity.HasOne(d => d.Area).WithMany(p => p.Wastereports)
-                .HasForeignKey(d => d.Areaid)
+            entity.HasOne(d => d.Area).WithMany(p => p.WasteReports)
+                .HasForeignKey(d => d.AreaId)
                 .HasConstraintName("fk_report_area");
 
-            entity.HasOne(d => d.Citizen).WithMany(p => p.Wastereports)
-                .HasForeignKey(d => d.Citizenid)
+            entity.HasOne(d => d.Citizen).WithMany(p => p.WasteReports)
+                .HasForeignKey(d => d.CitizenId)
                 .HasConstraintName("fk_report_citizen");
         });
 

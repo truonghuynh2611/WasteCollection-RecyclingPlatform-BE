@@ -60,11 +60,11 @@ public class AuthService : IAuthService
         
         // Generate JWT access token
         var token = _jwtHelper.GenerateToken(
-            user.Userid, 
+            user.UserId, 
             user.Email, 
-            user.Fullname, 
+            user.FullName, 
             user.Role.ToString(), 
-            user.Status.ToString()
+            user.Status?.ToString() ?? "false"
         );
         var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
         
@@ -75,10 +75,10 @@ public class AuthService : IAuthService
         // Save refresh token to database
         var refreshTokenEntity = new DataAccess.Entities.RefreshToken
         {
-            Userid = user.Userid,
+            UserId = user.UserId,
             Token = refreshToken,
             Expiresat = refreshTokenExpiration,
-            Createdat = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
             Isrevoked = false
         };
         
@@ -89,9 +89,9 @@ public class AuthService : IAuthService
         {
             Token = token,
             RefreshToken = refreshToken,
-            UserId = user.Userid,
+            UserId = user.UserId,
             Email = user.Email,
-            FullName = user.Fullname,
+            FullName = user.FullName,
             Role = user.Role.ToString(),
             Status = user.Status ?? false,
             ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
@@ -123,7 +123,7 @@ public class AuthService : IAuthService
             // Create user entity with PostgreSQL schema
             var user = new User
             {
-                Fullname = request.FullName,
+                FullName = request.FullName,
                 Email = request.Email,
                 Password = PasswordHasher.HashPassword(request.Password),
                 Phone = request.Phone,
@@ -143,8 +143,8 @@ public class AuthService : IAuthService
                 case UserRole.Citizen:
                     var citizen = new Citizen
                     {
-                        Userid = user.Userid,
-                        Totalpoints = 0
+                        UserId = user.UserId,
+                        TotalPoints = 0
                     };
                     await _unitOfWork.Citizens.AddAsync(citizen);
                     break;
@@ -157,10 +157,10 @@ public class AuthService : IAuthService
                     
                     var collector = new Collector
                     {
-                        Userid = user.Userid,
+                        UserId = user.UserId,
                         TeamId = request.TeamId.Value,
                         Status = true,
-                        Currenttaskcount = 0
+                        Role = CollectorRole.Member
                     };
                     await _unitOfWork.Collectors.AddAsync(collector);
                     break;
@@ -168,8 +168,8 @@ public class AuthService : IAuthService
                 case UserRole.Enterprise:
                     var enterprise = new Enterprise
                     {
-                        Userid = user.Userid,
-                        Districtid = request.DistrictId,
+                        UserId = user.UserId,
+                        DistrictId = request.DistrictId,
                         Wastetypes = request.WasteTypes,
                         Dailycapacity = request.DailyCapacity ?? 100, // Default capacity
                         Currentload = 0,
@@ -179,34 +179,35 @@ public class AuthService : IAuthService
                     break;
             }
             
-            await _unitOfWork.CommitTransactionAsync();
-            
-            // Generate JWT access token
-            var token = _jwtHelper.GenerateToken(
-                user.Userid, 
-                user.Email, 
-                user.Fullname, 
-                user.Role.ToString(), 
-                user.Status.ToString()
-            );
-            var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
-            
-            // Generate refresh token (30 days)
+            // Generate refresh token (30 days) - BEFORE committing transaction
             var refreshToken = RefreshTokenHelper.GenerateRefreshToken();
             var refreshTokenExpiration = RefreshTokenHelper.CalculateExpirationDate(30);
             
-            // Save refresh token to database
+            // Save refresh token to database - INSIDE transaction
             var refreshTokenEntity = new DataAccess.Entities.RefreshToken
             {
-                Userid = user.Userid,
+                UserId = user.UserId,
                 Token = refreshToken,
                 Expiresat = refreshTokenExpiration,
-                Createdat = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
                 Isrevoked = false
             };
             
             await _unitOfWork.RefreshTokens.AddAsync(refreshTokenEntity);
+            
+            // Save all changes (role-specific entity + refresh token) and commit transaction
             await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitTransactionAsync();
+            
+            // Generate JWT access token (after successful transaction)
+            var token = _jwtHelper.GenerateToken(
+                user.UserId, 
+                user.Email, 
+                user.FullName, 
+                user.Role.ToString(), 
+                user.Status?.ToString() ?? "false"
+            );
+            var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
             
             // Send verification email (async, don't wait)
             _ = Task.Run(async () =>
@@ -218,7 +219,7 @@ public class AuthService : IAuthService
                         <html>
                         <body style='font-family: Arial, sans-serif;'>
                             <h2>Verify Your Account</h2>
-                            <p>Hello {user.Fullname},</p>
+                            <p>Hello {user.FullName},</p>
                             <p>Thank you for registering with Waste Collection Platform.</p>
                             <p>Please click the link below to verify your email address:</p>
                             <p><a href='{verificationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Verify Email</a></p>
@@ -242,9 +243,9 @@ public class AuthService : IAuthService
             {
                 Token = token,
                 RefreshToken = refreshToken,
-                UserId = user.Userid,
+                UserId = user.UserId,
                 Email = user.Email,
-                FullName = user.Fullname,
+                FullName = user.FullName,
                 Role = user.Role.ToString(),
                 Status = user.Status ?? false,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
@@ -280,7 +281,7 @@ public class AuthService : IAuthService
         }
         
         // Get user
-        var user = await _unitOfWork.Users.GetByIdAsync(refreshTokenEntity.Userid);
+        var user = await _unitOfWork.Users.GetByIdAsync(refreshTokenEntity.UserId);
         if (user == null)
         {
             throw new NotFoundException(ErrorMessages.UserNotFound);
@@ -299,11 +300,11 @@ public class AuthService : IAuthService
         
         // Generate new access token
         var newToken = _jwtHelper.GenerateToken(
-            user.Userid, 
+            user.UserId, 
             user.Email, 
-            user.Fullname, 
+            user.FullName, 
             user.Role.ToString(), 
-            user.Status.ToString()
+            user.Status?.ToString() ?? "false"
         );
         var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
         
@@ -314,10 +315,10 @@ public class AuthService : IAuthService
         // Save new refresh token to database
         var newRefreshTokenEntity = new DataAccess.Entities.RefreshToken
         {
-            Userid = user.Userid,
+            UserId = user.UserId,
             Token = newRefreshToken,
             Expiresat = newRefreshTokenExpiration,
-            Createdat = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
             Isrevoked = false
         };
         
@@ -328,9 +329,9 @@ public class AuthService : IAuthService
         {
             Token = newToken,
             RefreshToken = newRefreshToken,
-            UserId = user.Userid,
+            UserId = user.UserId,
             Email = user.Email,
-            FullName = user.Fullname,
+            FullName = user.FullName,
             Role = user.Role.ToString(),
             Status = user.Status ?? false,
             ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
@@ -401,7 +402,7 @@ public class AuthService : IAuthService
                     <html>
                     <body style='font-family: Arial, sans-serif;'>
                         <h2>Reset Your Password</h2>
-                        <p>Hello {user.Fullname},</p>
+                        <p>Hello {user.FullName},</p>
                         <p>We received a request to reset your password.</p>
                         <p>Click the link below to reset your password:</p>
                         <p><a href='{resetLink}' style='background-color: #f44336; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Reset Password</a></p>

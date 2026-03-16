@@ -2,7 +2,7 @@ namespace WasteCollectionPlatform.Common.Enums;
 
 /// <summary>
 /// Defines user roles in the system
-/// ⚠ IMPORTANT: Order must match PostgreSQL ENUM: ('Citizen', 'Collector', 'Enterprise', 'Admin')
+/// Maps to PostgreSQL ENUM user_role with PascalCase values
 /// </summary>
 public enum UserRole
 {
@@ -24,10 +24,5 @@ public enum UserRole
     /// <summary>
     /// System administrator
     /// </summary>
-    Admin = 3,
-
-    /// <summary>
-    /// Area manager handling staffs and schedules
-    /// </summary>
-    Manager = 4
+    Admin = 3
 }

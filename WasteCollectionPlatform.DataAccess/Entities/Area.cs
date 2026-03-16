@@ -5,9 +5,9 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class Area
 {
-    public int Areaid { get; set; }
+    public int AreaId { get; set; }
 
-    public int Districtid { get; set; }
+    public int DistrictId { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -15,5 +15,5 @@ public partial class Area
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 
-    public virtual ICollection<Wastereport> Wastereports { get; set; } = new List<Wastereport>();
+    public virtual ICollection<WasteReport> WasteReports { get; set; } = new List<WasteReport>();
 }

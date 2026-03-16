@@ -38,7 +38,7 @@ public class TeamController : ControllerBase
             {
                 teamId = t.TeamId,
                 name = t.Name,
-                areaId = t.Areaid
+                areaId = t.AreaId
             }).ToList();
 
             return Ok(new ApiResponse<object>
@@ -88,7 +88,7 @@ public class TeamController : ControllerBase
             {
                 teamId = team.TeamId,
                 name = team.Name,
-                areaId = team.Areaid
+                areaId = team.AreaId
             };
 
             return Ok(new ApiResponse<object>

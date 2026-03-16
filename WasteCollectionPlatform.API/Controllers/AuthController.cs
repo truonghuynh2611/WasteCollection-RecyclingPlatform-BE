@@ -166,7 +166,7 @@ public class AuthController : ControllerBase
             
             await _authService.VerifyEmailAsync(token);
             
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Email verified successfully. You can now login."));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Email verified successfully. You can now login."));
         }
         catch (NotFoundException ex)
         {
@@ -209,7 +209,7 @@ public class AuthController : ControllerBase
             
             await _authService.ForgotPasswordAsync(request);
             
-            return Ok(ApiResponse<object>.SuccessResponse(null, "If the email exists, a password reset link has been sent."));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "If the email exists, a password reset link has been sent."));
         }
         catch (Exception ex)
         {
@@ -242,7 +242,7 @@ public class AuthController : ControllerBase
             
             await _authService.ResetPasswordAsync(request);
             
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Password reset successfully. You can now login with your new password."));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Password reset successfully. You can now login with your new password."));
         }
         catch (NotFoundException ex)
         {

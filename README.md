@@ -194,7 +194,7 @@ WasteCollectionPlatform/
 6. **Access Swagger UI**
    - Navigate to: `https://localhost:7xxx/swagger`
 
-**See:** `SETUP_COMMANDS.md` for detailed setup instructions
+For detailed setup, follow the commands in the Getting Started section above.
 
 ---
 
@@ -204,8 +204,6 @@ WasteCollectionPlatform/
 |----------|-------------|
 | `ENTITY_RELATIONSHIPS.md` | Complete ERD and entity documentation |
 | `API_ENDPOINTS.md` | Full API specification with examples |
-| `SETUP_COMMANDS.md` | Step-by-step setup guide |
-| `backend-structure-plan.md` | Detailed architecture documentation |
 
 ---
 
@@ -329,7 +327,7 @@ Use Swagger UI or Postman collection for manual testing
 **Issue:** Port already in use  
 **Solution:** Change port in `launchSettings.json`
 
-**See:** `SETUP_COMMANDS.md` for more solutions
+See the troubleshooting notes in this README for more solutions.
 
 ---
 
