@@ -2,6 +2,7 @@ using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.DataAccess.Entities;
+using WasteCollectionPlatform.DataAccess.Repositories.Implementations;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
 namespace WasteCollectionPlatform.Business.Services.Implementations;
@@ -14,7 +15,8 @@ public class WasteReportService : IWasteReportService
 	private readonly ITeamRepository _teamRepo;
 	private readonly ICollectorRepository _collectorRepo;
 	private readonly IReportImageRepository _reportImageRepo;
-	private readonly HttpClient _httpClient;
+    private readonly IWasteReportRepository _wasteReportRepository;
+    private readonly HttpClient _httpClient;
 
 	public WasteReportService(
 		IWasteReportRepository wasteReportRepo,
@@ -23,7 +25,8 @@ public class WasteReportService : IWasteReportService
 		ITeamRepository teamRepo,
 		ICollectorRepository collectorRepo,
 		IReportImageRepository reportImageRepo,
-		HttpClient httpClient)
+        IWasteReportRepository wasteReportRepository,
+        HttpClient httpClient)
 	{
 		_wasteReportRepo = wasteReportRepo;
 		_citizenRepo = citizenRepo;
@@ -31,7 +34,8 @@ public class WasteReportService : IWasteReportService
 		_teamRepo = teamRepo;
 		_collectorRepo = collectorRepo;
 		_reportImageRepo = reportImageRepo;
-		_httpClient = httpClient;
+        _wasteReportRepository = wasteReportRepository;
+        _httpClient = httpClient;
 	}
 
 	public async Task<IEnumerable<WasteReport>> GetAllAsync()
@@ -266,8 +270,11 @@ public class WasteReportService : IWasteReportService
 		await _citizenRepo.UpdateAsync(citizen);
 		await _wasteReportRepo.SaveChangesAsync();
 	}
-
-	public async Task<bool> DeleteAsync(int id)
+    public async Task<List<WasteReport>> GetProcessedReportsAsync()
+    {
+        return await _wasteReportRepository.GetProcessedReportsAsync();
+    }
+    public async Task<bool> DeleteAsync(int id)
 	{
 		var report = await _wasteReportRepo.GetByIdAsync(id);
 		if (report == null)

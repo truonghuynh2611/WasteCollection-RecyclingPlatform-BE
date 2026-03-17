@@ -111,8 +111,21 @@ public class WasteReportController : ControllerBase
 			return BadRequest(ex.Message);
 		}
 	}
-
-	[HttpDelete("{id}")]
+    [HttpGet("processed")]
+    public async Task<IActionResult> GetProcessedReports()
+    {
+        try
+        {
+            var reports = await _wasteReportService.GetProcessedReportsAsync();
+            return Ok(reports);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting processed reports");
+            return BadRequest(ex.Message);
+        }
+    }
+    [HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(int id)
 	{
 		try
