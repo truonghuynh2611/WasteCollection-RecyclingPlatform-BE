@@ -24,10 +24,71 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "collector_role", "collector_role", new[] { "member", "leader" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "image_type", new[] { "Citizen", "Collector" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "point_transaction_type", new[] { "Earn", "Redeem" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "user_role", new[] { "citizen", "collector", "enterprise", "admin" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "team_type", new[] { "Main", "Support" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", "user_role", new[] { "citizen", "collector", "enterprise", "admin" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Admin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("Id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("integer")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Department");
+
+                    b.Property<bool>("IsSuperAdmin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsSuperAdmin");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastLoginAt");
+
+                    b.Property<int?>("Level")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("Level");
+
+                    b.Property<bool>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("Status");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("Id")
+                        .HasName("admin_pkey");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex(new[] { "UserId" }, "admin_userid_key")
+                        .IsUnique();
+
+                    b.ToTable("Admins", (string)null);
+                });
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Area", b =>
                 {
@@ -476,6 +537,10 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("Status");
 
+                    b.Property<int>("TokenVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("tokenversion");
+
                     b.Property<string>("Verificationtoken")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -601,6 +666,26 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.HasIndex("CitizenId");
 
                     b.ToTable("WasteReports", (string)null);
+                });
+
+            modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Admin", b =>
+                {
+                    b.HasOne("WasteCollectionPlatform.DataAccess.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_admin_createdby");
+
+                    b.HasOne("WasteCollectionPlatform.DataAccess.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("WasteCollectionPlatform.DataAccess.Entities.Admin", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_admin_user");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Area", b =>

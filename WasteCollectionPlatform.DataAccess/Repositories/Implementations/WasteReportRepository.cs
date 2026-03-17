@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
@@ -77,14 +76,6 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         return Task.CompletedTask;
     }
 
-    public async Task<List<WasteReport>> GetProcessedReportsAsync()
-    {
-        return await _context.WasteReports
-            .Where(r => r.Status == ReportStatus.Completed || r.Status == ReportStatus.Cancelled)
-            .Include(r => r.Citizen)
-            .Include(r => r.ReportImages)
-            .ToListAsync();
-    }
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();

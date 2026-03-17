@@ -137,6 +137,7 @@ builder.Services.AddScoped<IReportImageRepository, ReportImageRepository>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IPointHistoryRepository, PointHistoryRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient();
@@ -144,6 +145,7 @@ builder.Services.AddHttpClient();
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWasteReportService, WasteReportService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 // Add other services here as they are implemented
 
 // Register FluentValidation
@@ -151,6 +153,21 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationValidator>();
 
 var app = builder.Build();
+
+// Apply pending migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
+    try
+    {
+        await context.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
+    }
+}
 
 // ⚠️ ALL MIGRATIONS AND SEED CODE COMMENTED OUT - Using PascalCase tables now
 /*

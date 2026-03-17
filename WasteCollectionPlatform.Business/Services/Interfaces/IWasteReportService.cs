@@ -16,6 +16,5 @@ public interface IWasteReportService
 		string? collectorImageUrl,
 		decimal? latitude,
 		decimal? longitude);
-    Task<List<WasteReport>> GetProcessedReportsAsync();
-    Task<bool> DeleteAsync(int id);
+	Task<bool> DeleteAsync(int id);
 }

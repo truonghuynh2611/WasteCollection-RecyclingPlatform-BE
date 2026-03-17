@@ -1,5 +1,7 @@
 namespace WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
+using Microsoft.EntityFrameworkCore.Storage;
+
 /// <summary>
 /// Unit of Work pattern interface for transaction management
 /// </summary>
@@ -17,7 +19,7 @@ public interface IUnitOfWork : IDisposable
     IRefreshTokenRepository RefreshTokens { get; }
     
     Task<int> SaveChangesAsync();
-    Task BeginTransactionAsync();
+    Task<IDbContextTransaction> BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
 }

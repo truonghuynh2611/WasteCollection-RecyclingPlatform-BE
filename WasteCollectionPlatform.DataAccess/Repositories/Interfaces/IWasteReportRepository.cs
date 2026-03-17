@@ -14,7 +14,5 @@ public interface IWasteReportRepository : IGenericRepository<WasteReport>
     new Task<WasteReport> AddAsync(WasteReport wasteReport);
     new Task UpdateAsync(WasteReport wasteReport);
     new Task DeleteAsync(WasteReport wasteReport);
-
-    Task<List<WasteReport>> GetProcessedReportsAsync();
     Task SaveChangesAsync();
 }
