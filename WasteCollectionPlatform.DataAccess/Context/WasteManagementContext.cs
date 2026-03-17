@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using WasteCollectionPlatform.Common.Enums;
@@ -19,7 +19,6 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Collector> Collectors { get; set; }
 
-    public virtual DbSet<Enterprise> Enterprises { get; set; }
 
     public virtual DbSet<District> Districts { get; set; }
 
@@ -346,8 +345,6 @@ public partial class WasteManagementContext : DbContext
         // RefreshToken configuration
         modelBuilder.ApplyConfiguration(new Configurations.RefreshTokenConfiguration());
 
-        // Enterprise configuration
-        modelBuilder.ApplyConfiguration(new Configurations.EnterpriseConfiguration());
 
         OnModelCreatingPartial(modelBuilder);
     }

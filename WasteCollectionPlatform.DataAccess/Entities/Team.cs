@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -6,7 +6,7 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class Team
 {
-    [Column("teamid")]
+    [Column("TeamId")]
     public int TeamId { get; set; }
 
     public int AreaId { get; set; }

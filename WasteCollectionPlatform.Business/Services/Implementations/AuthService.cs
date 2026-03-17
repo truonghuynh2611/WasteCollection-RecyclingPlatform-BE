@@ -164,19 +164,6 @@ public class AuthService : IAuthService
                     };
                     await _unitOfWork.Collectors.AddAsync(collector);
                     break;
-                
-                case UserRole.Enterprise:
-                    var enterprise = new Enterprise
-                    {
-                        UserId = user.UserId,
-                        DistrictId = request.DistrictId,
-                        Wastetypes = request.WasteTypes,
-                        Dailycapacity = request.DailyCapacity ?? 100, // Default capacity
-                        Currentload = 0,
-                        Status = true
-                    };
-                    await _unitOfWork.Enterprises.AddAsync(enterprise);
-                    break;
             }
             
             // Generate refresh token (30 days) - BEFORE committing transaction

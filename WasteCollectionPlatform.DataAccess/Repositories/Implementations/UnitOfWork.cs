@@ -16,7 +16,6 @@ public class UnitOfWork : IUnitOfWork
     private IUserRepository? _users;
     private ICitizenRepository? _citizens;
     private ICollectorRepository? _collectors;
-    private IEnterpriseRepository? _enterprises;
     private IDistrictRepository? _districts;
     private ITeamRepository? _teams;
     private IWasteReportRepository? _wasteReports;
@@ -38,8 +37,6 @@ public class UnitOfWork : IUnitOfWork
     public ICollectorRepository Collectors => 
         _collectors ??= new CollectorRepository(_context);
     
-    public IEnterpriseRepository Enterprises => 
-        _enterprises ??= new EnterpriseRepository(_context);
     
     public IDistrictRepository Districts => 
         _districts ??= new DistrictRepository(_context);

@@ -7,28 +7,28 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 /// <summary>
 /// Refresh token entity for sliding expiration authentication
 /// </summary>
-[Table("refreshtoken")]
+[Table("RefreshTokens")]
 public class RefreshToken
 {
     /// <summary>
     /// Refresh token ID
     /// </summary>
     [Key]
-    [Column("refreshtokenid")]
+    [Column("RefreshTokenId")]
     public int RefreshtokenId { get; set; }
 
     /// <summary>
     /// User ID
     /// </summary>
     [Required]
-    [Column("userid")]
+    [Column("UserId")]
     public int UserId { get; set; }
 
     /// <summary>
     /// Refresh token value (GUID)
     /// </summary>
     [Required]
-    [Column("token")]
+    [Column("Token")]
     [MaxLength(500)]
     public string Token { get; set; } = null!;
 
@@ -36,26 +36,26 @@ public class RefreshToken
     /// Token expiration date (30 days)
     /// </summary>
     [Required]
-    [Column("expiresat")]
+    [Column("ExpiresAt")]
     public DateTime Expiresat { get; set; }
 
     /// <summary>
     /// Token creation date
     /// </summary>
     [Required]
-    [Column("createdat")]
+    [Column("CreatedAt")]
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// Is token revoked (for logout/security)
     /// </summary>
-    [Column("isrevoked")]
+    [Column("IsRevoked")]
     public bool? Isrevoked { get; set; }
 
     /// <summary>
     /// Revoked date
     /// </summary>
-    [Column("revokedat")]
+    [Column("RevokedAt")]
     public DateTime? Revokedat { get; set; }
 
     /// <summary>

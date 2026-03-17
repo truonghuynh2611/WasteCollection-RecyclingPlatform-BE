@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using WasteCollectionPlatform.Common.Enums;
@@ -11,7 +11,7 @@ public partial class Collector
 
     public int UserId { get; set; }
 
-    [Column("teamid")]
+    [Column("TeamId")]
     public int TeamId { get; set; }
 
     public bool? Status { get; set; }

@@ -8,7 +8,6 @@ public interface IUnitOfWork : IDisposable
     IUserRepository Users { get; }
     ICitizenRepository Citizens { get; }
     ICollectorRepository Collectors { get; }
-    IEnterpriseRepository Enterprises { get; }
     IDistrictRepository Districts { get; }
     ITeamRepository Teams { get; }
     IWasteReportRepository WasteReports { get; }

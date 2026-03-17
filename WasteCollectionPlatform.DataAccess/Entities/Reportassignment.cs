@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,7 +10,7 @@ public partial class ReportAssignment
 
     public int ReportId { get; set; }
 
-    [Column("teamid")]
+    [Column("TeamId")]
     public int TeamId { get; set; }
 
     public virtual WasteReport Report { get; set; } = null!;

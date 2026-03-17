@@ -11,39 +11,39 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
-        builder.ToTable("refreshtoken");
+        builder.ToTable("RefreshTokens");
 
         builder.HasKey(e => e.RefreshtokenId)
             .HasName("refreshtoken_pkey");
 
         builder.Property(e => e.RefreshtokenId)
-            .HasColumnName("refreshtokenid")
+            .HasColumnName("RefreshTokenId")
             .UseIdentityAlwaysColumn();
 
         builder.Property(e => e.UserId)
             .IsRequired()
-            .HasColumnName("userid");
+            .HasColumnName("UserId");
 
         builder.Property(e => e.Token)
             .IsRequired()
             .HasMaxLength(500)
-            .HasColumnName("token");
+            .HasColumnName("Token");
 
         builder.Property(e => e.Expiresat)
             .IsRequired()
-            .HasColumnName("expiresat");
+            .HasColumnName("ExpiresAt");
 
         builder.Property(e => e.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
-            .HasColumnName("createdat");
+            .HasColumnName("CreatedAt");
 
         builder.Property(e => e.Isrevoked)
             .HasDefaultValue(false)
-            .HasColumnName("isrevoked");
+            .HasColumnName("IsRevoked");
 
         builder.Property(e => e.Revokedat)
-            .HasColumnName("revokedat");
+            .HasColumnName("RevokedAt");
 
         // Foreign key
         builder.HasOne(d => d.User)

@@ -17,12 +17,17 @@ public enum UserRole
     Collector = 1,
     
     /// <summary>
-    /// Enterprise/company that manages waste collection
+    /// Legacy role to prevent crash - DO NOT USE
     /// </summary>
     Enterprise = 2,
     
     /// <summary>
     /// System administrator
     /// </summary>
-    Admin = 3
+    Admin = 3,
+    
+    /// <summary>
+    /// Legacy role to prevent crash - DO NOT USE
+    /// </summary>
+    Manager = 4
 }
