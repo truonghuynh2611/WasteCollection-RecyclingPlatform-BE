@@ -20,7 +20,7 @@ public class WasteReportController : ControllerBase
 	}
 
 	[HttpPost]
-	public async Task<IActionResult> CreateReport([FromBody] CreateWasteReportDto dto)
+	public async Task<IActionResult> CreateReport([FromForm] CreateWasteReportDto dto)
 	{
 		try
 		{

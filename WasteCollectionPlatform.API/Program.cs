@@ -173,6 +173,9 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // Disable HTTPS redirect to allow frontend HTTP calls
 // app.UseHttpsRedirection();
 
+// Enable static files to serve uploaded images from wwwroot/uploads
+app.UseStaticFiles();
+
 app.UseCors("AllowAll");
 
 app.UseAuthentication();

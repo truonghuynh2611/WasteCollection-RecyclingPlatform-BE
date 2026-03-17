@@ -15,6 +15,7 @@ public class WasteReportService : IWasteReportService
 	private readonly ICollectorRepository _collectorRepo;
 	private readonly IReportImageRepository _reportImageRepo;
 	private readonly HttpClient _httpClient;
+	private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
 
 	public WasteReportService(
 		IWasteReportRepository wasteReportRepo,
@@ -23,7 +24,8 @@ public class WasteReportService : IWasteReportService
 		ITeamRepository teamRepo,
 		ICollectorRepository collectorRepo,
 		IReportImageRepository reportImageRepo,
-		HttpClient httpClient)
+		HttpClient httpClient,
+		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
 	{
 		_wasteReportRepo = wasteReportRepo;
 		_citizenRepo = citizenRepo;
@@ -32,6 +34,7 @@ public class WasteReportService : IWasteReportService
 		_collectorRepo = collectorRepo;
 		_reportImageRepo = reportImageRepo;
 		_httpClient = httpClient;
+		_env = env;
 	}
 
 	public async Task<IEnumerable<WasteReport>> GetAllAsync()
@@ -56,9 +59,16 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("Area does not exist");
 		}
 
-		if (!await IsValidImageUrlAsync(dto.ImageUrl))
+		string? finalImageUrl = dto.ImageUrl;
+
+		// Handle local file upload
+		if (dto.ImageFile != null && dto.ImageFile.Length > 0)
 		{
-			throw new Exception("Invalid image URL. Must be a real image link.");
+			finalImageUrl = await SaveImageAsync(dto.ImageFile);
+		}
+		else if (!await IsValidImageUrlAsync(dto.ImageUrl))
+		{
+			throw new Exception("Invalid image source. Please provide a valid URL or upload a file.");
 		}
 
 		var wasteReport = new WasteReport
@@ -77,7 +87,7 @@ public class WasteReportService : IWasteReportService
 
 		var image = new ReportImage
 		{
-			Imageurl = dto.ImageUrl!,
+			Imageurl = finalImageUrl!,
 			Report = wasteReport
 		};
 
@@ -86,6 +96,26 @@ public class WasteReportService : IWasteReportService
 		await _wasteReportRepo.SaveChangesAsync();
 
 		return wasteReport;
+	}
+
+	private async Task<string> SaveImageAsync(Microsoft.AspNetCore.Http.IFormFile file)
+	{
+		var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads");
+		if (!Directory.Exists(uploadsFolder))
+		{
+			Directory.CreateDirectory(uploadsFolder);
+		}
+
+		var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+		var filePath = Path.Combine(uploadsFolder, fileName);
+
+		using (var stream = new FileStream(filePath, FileMode.Create))
+		{
+			await file.CopyToAsync(stream);
+		}
+
+		// Return the relative URL (Assuming the app runs on localhost:5000)
+		return $"/uploads/{fileName}";
 	}
 
 	private async Task<bool> IsValidImageUrlAsync(string? url)
