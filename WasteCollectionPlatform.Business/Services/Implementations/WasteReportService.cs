@@ -13,6 +13,7 @@ public class WasteReportService : IWasteReportService
 	private readonly IAreaRepository _areaRepo;
 	private readonly ITeamRepository _teamRepo;
 	private readonly ICollectorRepository _collectorRepo;
+	private readonly IUserRepository _userRepo;
 	private readonly IReportImageRepository _reportImageRepo;
 	private readonly HttpClient _httpClient;
 	private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
@@ -23,6 +24,7 @@ public class WasteReportService : IWasteReportService
 		IAreaRepository areaRepo,
 		ITeamRepository teamRepo,
 		ICollectorRepository collectorRepo,
+		IUserRepository userRepo,
 		IReportImageRepository reportImageRepo,
 		HttpClient httpClient,
 		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
@@ -32,6 +34,7 @@ public class WasteReportService : IWasteReportService
 		_areaRepo = areaRepo;
 		_teamRepo = teamRepo;
 		_collectorRepo = collectorRepo;
+		_userRepo = userRepo;
 		_reportImageRepo = reportImageRepo;
 		_httpClient = httpClient;
 		_env = env;
@@ -42,10 +45,21 @@ public class WasteReportService : IWasteReportService
 		return await _wasteReportRepo.GetAllAsync();
 	}
 
-	public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId)
-	{
-		return await _wasteReportRepo.GetByCitizenIdAsync(citizenId);
-	}
+    public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int id)
+    {
+        // Try to find citizen by CitizenId first, then by UserId
+        var citizen = await _citizenRepo.GetByIdAsync(id);
+        if (citizen == null)
+        {
+            citizen = await _citizenRepo.GetByUserIdAsync(id);
+        }
+
+        if (citizen == null)
+        {
+            return new List<WasteReport>();
+        }
+        return await _wasteReportRepo.GetByCitizenIdAsync(citizen.CitizenId);
+    }
 
 	public async Task<WasteReport?> GetByIdAsync(int id)
 	{
@@ -54,9 +68,31 @@ public class WasteReportService : IWasteReportService
 
 	public async Task<WasteReport> CreateAsync(CreateWasteReportDto dto)
 	{
-		if (!await _citizenRepo.ExistsAsync(c => c.CitizenId == dto.CitizenId))
+		// Try to find citizen by CitizenId (PK) or UserId (fallback for frontend sends user.id)
+		var citizen = await _citizenRepo.GetByIdAsync(dto.CitizenId);
+		if (citizen == null)
 		{
-			throw new Exception("Citizen does not exist");
+			citizen = await _citizenRepo.GetByUserIdAsync(dto.CitizenId);
+		}
+
+		if (citizen == null)
+		{
+			// Check if the provided ID is actually a valid User ID before auto-creating
+			var user = await _userRepo.GetByIdAsync(dto.CitizenId);
+			if (user != null)
+			{
+				citizen = new Citizen
+				{
+					UserId = user.UserId,
+					TotalPoints = 0
+				};
+				await _citizenRepo.AddAsync(citizen);
+				await _wasteReportRepo.SaveChangesAsync(); // Save to get the new CitizenId
+			}
+			else
+			{
+				throw new Exception($"Citizen not found for ID {dto.CitizenId}");
+			}
 		}
 
 		if (!await _areaRepo.ExistsAsync(dto.AreaId))
@@ -71,7 +107,7 @@ public class WasteReportService : IWasteReportService
 		{
 			finalImageUrl = await SaveImageAsync(dto.ImageFile);
 		}
-		else if (!await IsValidImageUrlAsync(dto.ImageUrl))
+		else if (!string.IsNullOrEmpty(dto.ImageUrl) && !await IsValidImageUrlAsync(dto.ImageUrl))
 		{
 			throw new Exception("Invalid image source. Please provide a valid URL or upload a file.");
 		}
@@ -79,7 +115,7 @@ public class WasteReportService : IWasteReportService
 		var wasteReport = new WasteReport
 		{
 			Description = dto.Description,
-			CitizenId = dto.CitizenId,
+			CitizenId = citizen.CitizenId, // Use the correct CitizenId from DB
 			AreaId = dto.AreaId,
 			WasteType = dto.WasteType,
 			CitizenLatitude = dto.Latitude,
@@ -90,14 +126,16 @@ public class WasteReportService : IWasteReportService
 			TeamId = null
 		};
 
-		var image = new ReportImage
-		{
-			Imageurl = finalImageUrl!,
-			Report = wasteReport
-		};
-
 		await _wasteReportRepo.AddAsync(wasteReport);
-		await _reportImageRepo.AddAsync(image);
+		if (!string.IsNullOrEmpty(finalImageUrl))
+		{
+			var image = new ReportImage
+			{
+				Imageurl = finalImageUrl,
+				Report = wasteReport
+			};
+			await _reportImageRepo.AddAsync(image);
+		}
 		await _wasteReportRepo.SaveChangesAsync();
 
 		return wasteReport;
@@ -308,6 +346,11 @@ public class WasteReportService : IWasteReportService
 		if (report == null)
 		{
 			return false;
+		}
+
+		if (report.Status != ReportStatus.Pending)
+		{
+			throw new Exception("Only pending reports can be deleted");
 		}
 
 		await _wasteReportRepo.DeleteAsync(report);
