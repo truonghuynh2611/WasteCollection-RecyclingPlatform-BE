@@ -38,6 +38,16 @@ public class AdminController : ControllerBase
         return adminId;
     }
 
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst("UserId");
+        if (!int.TryParse(userIdClaim?.Value, out var userId))
+        {
+            throw new UnauthorizedException("User ID not found in token");
+        }
+        return userId;
+    }
+
     private bool IsSuperAdmin()
     {
         var superAdminClaim = User.FindFirst("isSuperAdmin");
@@ -62,8 +72,8 @@ public class AdminController : ControllerBase
                 return Forbid();
             }
 
-            var superAdminId = GetCurrentAdminId();
-            var admin = await _adminService.CreateAdminAsync(request, superAdminId);
+            var superAdminUserId = GetCurrentUserId();
+            var admin = await _adminService.CreateAdminAsync(request, superAdminUserId);
 
             return CreatedAtAction(nameof(GetAdminById), new { id = admin.Id },
                 ApiResponse<GetAdminResponseDto>.SuccessResponse(admin, "Admin created successfully"));
