@@ -42,6 +42,11 @@ public class WasteReportService : IWasteReportService
 		return await _wasteReportRepo.GetAllAsync();
 	}
 
+	public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId)
+	{
+		return await _wasteReportRepo.GetByCitizenIdAsync(citizenId);
+	}
+
 	public async Task<WasteReport?> GetByIdAsync(int id)
 	{
 		return await _wasteReportRepo.GetByIdAsync(id);

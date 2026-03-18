@@ -54,6 +54,21 @@ public class WasteReportController : ControllerBase
 		}
 	}
 
+	[HttpGet("citizen/{citizenId}")]
+	public async Task<IActionResult> GetByCitizenId(int citizenId)
+	{
+		try
+		{
+			var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
+			return Ok(reports);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
+			return StatusCode(500, ex.Message);
+		}
+	}
+
 	[HttpGet("{id}")]
 	public async Task<IActionResult> GetById(int id)
 	{

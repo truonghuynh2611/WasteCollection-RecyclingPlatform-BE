@@ -8,6 +8,7 @@ public interface IWasteReportService
 	Task<IEnumerable<WasteReport>> GetAllAsync();
 	Task<WasteReport?> GetByIdAsync(int id);
 	Task<WasteReport> CreateAsync(CreateWasteReportDto dto);
+	Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId);
 	Task AssignReportAsync(int reportId);
 	Task ProcessReportAsync(
 		int reportId,
