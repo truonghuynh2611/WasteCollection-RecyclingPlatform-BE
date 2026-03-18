@@ -18,14 +18,18 @@ namespace WasteCollectionPlatform.API.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
+
+    private readonly IWasteReportService _wasteReportService;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
+        IWasteReportService wasteReportService,
         IAdminService adminService,
         ILogger<AdminController> logger)
     {
         _adminService = adminService;
         _logger = logger;
+        _wasteReportService = wasteReportService;
     }
 
     private int GetCurrentAdminId()

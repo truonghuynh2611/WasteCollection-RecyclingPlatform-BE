@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 
@@ -75,21 +77,6 @@ public class WasteReportController : ControllerBase
 		}
 	}
 
-	[HttpPost("assign/{id}")]
-	public async Task<IActionResult> Assign(int id)
-	{
-		try
-		{
-			await _wasteReportService.AssignReportAsync(id);
-			return Ok("Report assigned successfully");
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Error assigning waste report {ReportId}", id);
-			return BadRequest(ex.Message);
-		}
-	}
-
 	[HttpPost("process")]
 	public async Task<IActionResult> Process([FromBody] ProcessReportDto dto)
 	{
@@ -131,5 +118,38 @@ public class WasteReportController : ControllerBase
 			_logger.LogError(ex, "Error deleting waste report {ReportId}", id);
 			return BadRequest(ex.Message);
 		}
+	}
+
+	/// <summary>
+	/// Assign waste report to team (Admin only)
+	/// </summary>
+	/// <param name="id">Waste Report ID</param>
+	/// <returns>Success message</returns>
+	[HttpPost("{id}/assign")]
+	[Authorize]
+	public async Task<IActionResult> AssignReport(int id)
+	{
+		try
+		{
+			// Only admin users can assign reports
+			if (!IsAdmin())
+			{
+				return Forbid();
+			}
+
+			await _wasteReportService.AssignReportAsync(id);
+			return Ok("Report assigned successfully");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error assigning waste report {ReportId}", id);
+			return BadRequest(ex.Message);
+		}
+	}
+
+	private bool IsAdmin()
+	{
+		var adminIdClaim = User.FindFirst("adminId");
+		return adminIdClaim != null;
 	}
 }
