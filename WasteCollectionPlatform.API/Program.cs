@@ -146,6 +146,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWasteReportService, WasteReportService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IAreaService, AreaService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 // Add other services here as they are implemented
 
 // Register FluentValidation
