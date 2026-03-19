@@ -30,20 +30,20 @@ public partial class User
 
     // Email Verification fields
     [Column("EmailVerified")]
-    public bool Emailverified { get; set; } = false;
+    public bool EmailVerified { get; set; } = false;
     
     [Column("VerificationToken")]
-    public string? Verificationtoken { get; set; }
+    public string? VerificationToken { get; set; }
     
     [Column("VerificationTokenExpiry")]
-    public DateTime? Verificationtokenexpiry { get; set; }
+    public DateTime? VerificationTokenExpiry { get; set; }
     
     // Password Reset fields
     [Column("ResetPasswordToken")]
-    public string? Resetpasswordtoken { get; set; }
+    public string? ResetPasswordToken { get; set; }
     
     [Column("ResetTokenExpiry")]
-    public DateTime? Resettokenexpiry { get; set; }
+    public DateTime? ResetTokenExpiry { get; set; }
 
     public virtual Citizen? Citizen { get; set; }
 

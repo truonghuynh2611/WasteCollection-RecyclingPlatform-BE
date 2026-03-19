@@ -151,13 +151,23 @@ builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationValidator>(
 
 var app = builder.Build();
 
-// ⚠️ MIGRATIONS ARE HANDLED VIA EF CORE DEV TOOLS OR SQL SCRIPTS, NOT RUNTIME HACKS
-/*
 using (var scope = app.Services.CreateScope())
 {
-    // Original runtime migration code removed for safety and best practices.
+    var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
+    try {
+        string sql = @"
+            CREATE TABLE IF NOT EXISTS ""PendingRegistrations"" (
+                ""Email"" VARCHAR(150) PRIMARY KEY,
+                ""FullName"" VARCHAR(150) NOT NULL,
+                ""PasswordHash"" TEXT NOT NULL,
+                ""Phone"" VARCHAR(20) NOT NULL,
+                ""VerificationCode"" VARCHAR(10) NOT NULL,
+                ""Expiry"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                ""CreatedAt"" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );";
+        context.Database.ExecuteSqlRaw(sql);
+    } catch {}
 }
-*/
 // Configure the HTTP request pipeline
 // Enable Swagger in all environments (for development/testing purposes)
 app.UseSwagger();

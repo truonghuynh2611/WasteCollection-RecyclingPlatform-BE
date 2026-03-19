@@ -21,5 +21,7 @@ public class AuthResponseDto
     
     public bool Status { get; set; }
     
+    public int? CitizenId { get; set; }
+    
     public DateTime ExpiresAt { get; set; }
 }

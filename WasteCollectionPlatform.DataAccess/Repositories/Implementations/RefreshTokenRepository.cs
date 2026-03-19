@@ -26,21 +26,21 @@ public class RefreshTokenRepository : GenericRepository<RefreshToken>, IRefreshT
         var now = DateTime.UtcNow;
         return await _dbSet
             .Where(rt => rt.UserId == userId 
-                && rt.Isrevoked != true 
-                && rt.Expiresat > now)
+                && rt.IsRevoked != true 
+                && rt.ExpiresAt > now)
             .ToListAsync();
     }
 
     public async Task RevokeAllUserTokensAsync(int userId)
     {
         var tokens = await _dbSet
-            .Where(rt => rt.UserId == userId && rt.Isrevoked != true)
+            .Where(rt => rt.UserId == userId && rt.IsRevoked != true)
             .ToListAsync();
 
         foreach (var token in tokens)
         {
-            token.Isrevoked = true;
-            token.Revokedat = DateTime.UtcNow;
+            token.IsRevoked = true;
+            token.RevokedAt = DateTime.UtcNow;
         }
 
         await _context.SaveChangesAsync();
@@ -50,7 +50,7 @@ public class RefreshTokenRepository : GenericRepository<RefreshToken>, IRefreshT
     {
         var now = DateTime.UtcNow;
         var expiredTokens = await _dbSet
-            .Where(rt => rt.Expiresat <= now || rt.Isrevoked == true)
+            .Where(rt => rt.ExpiresAt <= now || rt.IsRevoked == true)
             .ToListAsync();
 
         _dbSet.RemoveRange(expiredTokens);

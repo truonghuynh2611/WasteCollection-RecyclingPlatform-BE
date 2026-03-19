@@ -14,6 +14,7 @@ public interface IUnitOfWork : IDisposable
     IVoucherRepository Vouchers { get; }
     IPointHistoryRepository PointHistories { get; }
     IRefreshTokenRepository RefreshTokens { get; }
+    IPendingRegistrationRepository PendingRegistrations { get; }
     
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();

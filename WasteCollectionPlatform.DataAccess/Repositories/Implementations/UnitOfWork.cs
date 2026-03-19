@@ -22,6 +22,7 @@ public class UnitOfWork : IUnitOfWork
     private IVoucherRepository? _vouchers;
     private IPointHistoryRepository? _pointHistories;
     private IRefreshTokenRepository? _refreshTokens;
+    private IPendingRegistrationRepository? _pendingRegistrations;
     
     public UnitOfWork(WasteManagementContext context)
     {
@@ -55,6 +56,9 @@ public class UnitOfWork : IUnitOfWork
     
     public IRefreshTokenRepository RefreshTokens => 
         _refreshTokens ??= new RefreshTokenRepository(_context);
+
+    public IPendingRegistrationRepository PendingRegistrations => 
+        _pendingRegistrations ??= new PendingRegistrationRepository(_context);
     
     public async Task<int> SaveChangesAsync()
     {

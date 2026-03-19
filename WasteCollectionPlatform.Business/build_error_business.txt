@@ -1,0 +1,13 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  WasteCollectionPlatform.Common -> d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Common\bin\Debug\net8.0\WasteCollectionPlatform.Common.dll
+  WasteCollectionPlatform.DataAccess -> d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.DataAccess\bin\Debug\net8.0\WasteCollectionPlatform.DataAccess.dll
+d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\Services\Implementations\AuthService.cs(508,29): error CS0111: Type 'AuthService' already defines a member called 'ResendVerificationCodeAsync' with the same parameter types [d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\WasteCollectionPlatform.Business.csproj]
+
+Build FAILED.
+
+d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\Services\Implementations\AuthService.cs(508,29): error CS0111: Type 'AuthService' already defines a member called 'ResendVerificationCodeAsync' with the same parameter types [d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\WasteCollectionPlatform.Business.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:01.67

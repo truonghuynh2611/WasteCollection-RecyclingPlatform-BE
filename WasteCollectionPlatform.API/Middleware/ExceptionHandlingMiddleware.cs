@@ -65,6 +65,12 @@ public class ExceptionHandlingMiddleware
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 response = ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError);
                 _logger.LogError(exception, "Unhandled exception occurred");
+                
+                // Debug: Write exception to file
+                try {
+                    System.IO.File.WriteAllText(@"d:\SWP391_SP26\crash.txt", exception.ToString());
+                } catch {}
+                
                 break;
         }
         

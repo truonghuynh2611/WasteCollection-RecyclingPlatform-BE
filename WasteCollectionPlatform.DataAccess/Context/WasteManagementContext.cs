@@ -39,6 +39,7 @@ public partial class WasteManagementContext : DbContext
     public virtual DbSet<WasteReport> WasteReports { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+    public virtual DbSet<PendingRegistration> PendingRegistrations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,7 +76,9 @@ public partial class WasteManagementContext : DbContext
 
             entity.HasIndex(e => e.UserId, "citizen_userid_key").IsUnique();
 
-            entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
+            entity.Property(e => e.CitizenId)
+                .HasColumnName("CitizenId")
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.TotalPoints)
                 .HasDefaultValue(0)
                 .HasColumnName("TotalPoints");
@@ -246,7 +249,9 @@ public partial class WasteManagementContext : DbContext
 
             entity.HasIndex(e => e.Email, "User_email_key").IsUnique();
 
-            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.UserId)
+                .HasColumnName("UserId")
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.Email)
                 .HasMaxLength(150)
                 .HasColumnName("Email");
@@ -264,18 +269,17 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
                 .HasColumnName("Status");
-            entity.Property(e => e.Emailverified)
-                .HasDefaultValue(false)
+            entity.Property(e => e.EmailVerified)
                 .HasColumnName("EmailVerified");
-            entity.Property(e => e.Verificationtoken)
+            entity.Property(e => e.VerificationToken)
                 .HasMaxLength(500)
                 .HasColumnName("VerificationToken");
-            entity.Property(e => e.Verificationtokenexpiry)
+            entity.Property(e => e.VerificationTokenExpiry)
                 .HasColumnName("VerificationTokenExpiry");
-            entity.Property(e => e.Resetpasswordtoken)
+            entity.Property(e => e.ResetPasswordToken)
                 .HasMaxLength(500)
                 .HasColumnName("ResetPasswordToken");
-            entity.Property(e => e.Resettokenexpiry)
+            entity.Property(e => e.ResetTokenExpiry)
                 .HasColumnName("ResetTokenExpiry");
         });
 

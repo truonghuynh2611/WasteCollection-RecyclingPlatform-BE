@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.Constants;
 using WasteCollectionPlatform.Common.DTOs.Request.Auth;
+using WasteCollectionPlatform.Common.DTOs.Response.Auth;
 using WasteCollectionPlatform.Common.DTOs.Response.Common;
 using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.Common.Exceptions;
@@ -27,7 +28,7 @@ public class AuthController : ControllerBase
     /// <param name="request">Login credentials</param>
     /// <returns>Authentication response with JWT token</returns>
     [HttpPost("login")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
@@ -46,7 +47,7 @@ public class AuthController : ControllerBase
             
             var result = await _authService.LoginAsync(request);
             
-            return Ok(ApiResponse<object>.SuccessResponse(result, SuccessMessages.LoginSuccess));
+            return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(result, SuccessMessages.LoginSuccess));
         }
         catch (UnauthorizedException ex)
         {
@@ -66,7 +67,7 @@ public class AuthController : ControllerBase
     /// <param name="request">Registration data</param>
     /// <returns>Authentication response</returns>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
@@ -84,12 +85,10 @@ public class AuthController : ControllerBase
             
             var result = await _authService.RegisterAsync(request);
             
-            // PostgreSQL schema: Status is bool (true = active, false/null = inactive)
-            var message = result.Status 
-                ? SuccessMessages.RegisterSuccess
-                : SuccessMessages.RegisterSuccessPending;
+            // For 6-digit code flow, status is false until verified
+            var message = "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã xác thực 6 số.";
             
-            return StatusCode(201, ApiResponse<object>.SuccessResponse(result, message));
+            return StatusCode(201, ApiResponse<AuthResponseDto>.SuccessResponse(result, message));
         }
         catch (BusinessRuleException ex)
         {
@@ -109,7 +108,7 @@ public class AuthController : ControllerBase
     /// <param name="request">Refresh token request</param>
     /// <returns>New authentication response with refreshed token</returns>
     [HttpPost("refresh-token")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
@@ -128,7 +127,7 @@ public class AuthController : ControllerBase
             
             var result = await _authService.RefreshTokenAsync(request.Token);
             
-            return Ok(ApiResponse<object>.SuccessResponse(result, SuccessMessages.TokenRefreshed));
+            return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(result, SuccessMessages.TokenRefreshed));
         }
         catch (UnauthorizedException ex)
         {
@@ -148,30 +147,19 @@ public class AuthController : ControllerBase
     }
     
     /// <summary>
-    /// Verify email address
+    /// Verify email address with 6-digit code
     /// </summary>
-    /// <param name="token">Verification token from email</param>
-    /// <returns>Success response</returns>
-    [HttpGet("verify-email")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    /// <param name="request">Email and 6-digit code</param>
+    /// <returns>Success response with auth data</returns>
+    [HttpPost("verify-email")]
+    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequestDto request)
     {
         try
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                return BadRequest(ApiResponse<object>.ErrorResponse("Token is required."));
-            }
-            
-            await _authService.VerifyEmailAsync(token);
-            
-            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Email verified successfully. You can now login."));
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Email verification failed - token not found");
-            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            var result = await _authService.VerifyEmailAsync(request);
+            return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(result, "Email verified successfully. You are now logged in."));
         }
         catch (BusinessRuleException ex)
         {
@@ -181,6 +169,31 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during email verification");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError));
+        }
+    }
+
+    /// <summary>
+    /// Resend verification code
+    /// </summary>
+    /// <param name="request">Email address</param>
+    /// <returns>Success message</returns>
+    [HttpPost("resend-code")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ResendCode([FromBody] ResendCodeRequestDto request)
+    {
+        try
+        {
+            await _authService.ResendVerificationCodeAsync(request.Email);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Mã xác thực đã được gửi lại."));
+        }
+        catch (NotFoundException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during resend code");
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError));
         }
     }

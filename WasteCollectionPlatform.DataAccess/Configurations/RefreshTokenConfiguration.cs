@@ -13,10 +13,10 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
     {
         builder.ToTable("RefreshTokens");
 
-        builder.HasKey(e => e.RefreshtokenId)
+        builder.HasKey(e => e.RefreshTokenId)
             .HasName("refreshtoken_pkey");
 
-        builder.Property(e => e.RefreshtokenId)
+        builder.Property(e => e.RefreshTokenId)
             .HasColumnName("RefreshTokenId")
             .UseIdentityAlwaysColumn();
 
@@ -29,7 +29,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .HasMaxLength(500)
             .HasColumnName("Token");
 
-        builder.Property(e => e.Expiresat)
+        builder.Property(e => e.ExpiresAt)
             .IsRequired()
             .HasColumnName("ExpiresAt");
 
@@ -38,11 +38,11 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .HasColumnName("CreatedAt");
 
-        builder.Property(e => e.Isrevoked)
+        builder.Property(e => e.IsRevoked)
             .HasDefaultValue(false)
             .HasColumnName("IsRevoked");
 
-        builder.Property(e => e.Revokedat)
+        builder.Property(e => e.RevokedAt)
             .HasColumnName("RevokedAt");
 
         // Foreign key

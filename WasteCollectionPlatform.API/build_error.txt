@@ -1,0 +1,14 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  WasteCollectionPlatform.Common -> d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Common\bin\Debug\net8.0\WasteCollectionPlatform.Common.dll
+  WasteCollectionPlatform.DataAccess -> d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.DataAccess\bin\Debug\net8.0\WasteCollectionPlatform.DataAccess.dll
+  WasteCollectionPlatform.Business -> d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\bin\Debug\net8.0\WasteCollectionPlatform.Business.dll
+d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.API\Controllers\AuthController.cs(167,62): error CS1503: Argument 1: cannot convert from 'string' to 'WasteCollectionPlatform.Common.DTOs.Request.Auth.VerifyEmailRequestDto' [d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.API\WasteCollectionPlatform.API.csproj]
+
+Build FAILED.
+
+d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.API\Controllers\AuthController.cs(167,62): error CS1503: Argument 1: cannot convert from 'string' to 'WasteCollectionPlatform.Common.DTOs.Request.Auth.VerifyEmailRequestDto' [d:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.API\WasteCollectionPlatform.API.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:01.81

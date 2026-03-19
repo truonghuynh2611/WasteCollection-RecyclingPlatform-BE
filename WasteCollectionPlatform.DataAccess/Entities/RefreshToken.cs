@@ -15,7 +15,7 @@ public class RefreshToken
     /// </summary>
     [Key]
     [Column("RefreshTokenId")]
-    public int RefreshtokenId { get; set; }
+    public int RefreshTokenId { get; set; }
 
     /// <summary>
     /// User ID
@@ -37,7 +37,7 @@ public class RefreshToken
     /// </summary>
     [Required]
     [Column("ExpiresAt")]
-    public DateTime Expiresat { get; set; }
+    public DateTime ExpiresAt { get; set; }
 
     /// <summary>
     /// Token creation date
@@ -50,13 +50,13 @@ public class RefreshToken
     /// Is token revoked (for logout/security)
     /// </summary>
     [Column("IsRevoked")]
-    public bool? Isrevoked { get; set; }
+    public bool? IsRevoked { get; set; }
 
     /// <summary>
     /// Revoked date
     /// </summary>
     [Column("RevokedAt")]
-    public DateTime? Revokedat { get; set; }
+    public DateTime? RevokedAt { get; set; }
 
     /// <summary>
     /// Navigation property to User
