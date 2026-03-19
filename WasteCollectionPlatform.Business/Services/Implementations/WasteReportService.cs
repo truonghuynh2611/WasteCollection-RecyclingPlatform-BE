@@ -1,6 +1,9 @@
+using Microsoft.Extensions.Logging;
 using WasteCollectionPlatform.Business.Services.Interfaces;
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.Common.Enums;
+using WasteCollectionPlatform.Common.Exceptions;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -19,7 +22,8 @@ public class WasteReportService : IWasteReportService
 	private readonly INotificationService _notificationService;
 	private readonly HttpClient _httpClient;
 	private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
-	private readonly ILogger<WasteReportService> _logger;
+    private readonly ILogger<WasteReportService> _logger;
+
 
 	public WasteReportService(
 		IWasteReportRepository wasteReportRepo,
@@ -33,6 +37,7 @@ public class WasteReportService : IWasteReportService
 		HttpClient httpClient,
 		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env,
 		ILogger<WasteReportService> logger)
+
 	{
 		_wasteReportRepo = wasteReportRepo;
 		_citizenRepo = citizenRepo;
@@ -42,6 +47,7 @@ public class WasteReportService : IWasteReportService
 		_userRepo = userRepo;
 		_reportImageRepo = reportImageRepo;
 		_notificationService = notificationService;
+
 		_httpClient = httpClient;
 		_env = env;
 		_logger = logger;
@@ -150,7 +156,7 @@ public class WasteReportService : IWasteReportService
 		{
 			await _notificationService.SendNotificationToRoleAsync(
 				UserRole.Admin,
-				$"Bạn đang có 1 báo cáo rác mới từ người dân (Mã: #{wasteReport.ReportId})",
+				$"Báº¡n Ä‘ang cĂ³ 1 bĂ¡o cĂ¡o rĂ¡c má»›i tá»« ngÆ°á»i dĂ¢n (MĂ£: #{wasteReport.ReportId})",
 				wasteReport.ReportId);
 		}
 		catch (Exception ex)
@@ -271,7 +277,7 @@ public class WasteReportService : IWasteReportService
 		{
 			await _notificationService.SendNotificationToTeamAsync(
 				selectedTeam.TeamId,
-				$"Bạn vừa được phân công thu gom một đơn báo cáo rác (Mã: #{report.ReportId})",
+				$"Báº¡n vá»«a Ä‘Æ°á»£c phĂ¢n cĂ´ng thu gom má»™t Ä‘Æ¡n bĂ¡o cĂ¡o rĂ¡c (MĂ£: #{report.ReportId})",
 				report.ReportId);
 		}
 		catch (Exception ex)
@@ -279,8 +285,29 @@ public class WasteReportService : IWasteReportService
 			_logger.LogWarning(ex, "Failed to send notification for assigned report {ReportId}", report.ReportId);
 		}
 	}
+    public async Task CancelReportAsync(CancelReportRequestDto request)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(request.ReportId);
+        if (report == null)
+            throw new KeyNotFoundException("Report not found");
 
-	public async Task ProcessReportAsync(
+        // Ch? cancel report Pending
+        if (report.Status != ReportStatus.Pending)
+            throw new BusinessRuleException("Only reports in Pending status can be cancelled");
+
+        // Ch? set Status = Cancelled, không thêm field CanceledReason
+        report.Status = ReportStatus.Cancelled;
+
+        await _wasteReportRepo.UpdateAsync(report);
+        await _wasteReportRepo.SaveChangesAsync();
+
+        // N?u mu?n, log lư do cancel
+        if (!string.IsNullOrEmpty(request.Reason))
+        {
+            _logger.LogInformation("Admin cancelled report {ReportId}. Reason: {Reason}", request.ReportId, request.Reason);
+        }
+    }
+    public async Task ProcessReportAsync(
 		int reportId,
 		int collectorId,
 		bool isValid,
@@ -348,17 +375,35 @@ public class WasteReportService : IWasteReportService
 		if (isValid)
 		{
 			report.Status = ReportStatus.Completed;
-			citizen.TotalPoints += 10;
+			citizen.TotalPoints = (citizen.TotalPoints ?? 0) + 10;
+            
+            // Record PointHistory
+            var pointLog = new PointHistory
+            {
+                CitizenId = citizen.CitizenId,
+                PointAmount = 10,
+                CreatedAt = DateTime.Now
+            };
+            await _unitOfWork.PointHistories.AddAsync(pointLog);
 		}
 		else
 		{
 			report.Status = ReportStatus.Cancelled;
-			citizen.TotalPoints -= 5;
+			citizen.TotalPoints = (citizen.TotalPoints ?? 0) - 5;
 
 			if (citizen.TotalPoints < 0)
 			{
 				citizen.TotalPoints = 0;
 			}
+            
+            // Record PointHistory
+            var pointLog = new PointHistory
+            {
+                CitizenId = citizen.CitizenId,
+                PointAmount = -5,
+                CreatedAt = DateTime.Now
+            };
+            await _unitOfWork.PointHistories.AddAsync(pointLog);
 		}
 
 		var team = await _teamRepo.GetByIdAsync(report.TeamId.Value);
@@ -370,7 +415,7 @@ public class WasteReportService : IWasteReportService
 
 		await _wasteReportRepo.UpdateAsync(report);
 		await _citizenRepo.UpdateAsync(citizen);
-		await _wasteReportRepo.SaveChangesAsync();
+		await _unitOfWork.SaveChangesAsync();
 	}
 
 	public async Task ConfirmReportAsync(int reportId, int collectorId)
@@ -406,7 +451,7 @@ public class WasteReportService : IWasteReportService
 		{
 			await _notificationService.SendNotificationToRoleAsync(
 				UserRole.Admin,
-				$"Báo cáo rác (Mã: #{report.ReportId}) đang được xử lí bởi nhân viên thu gom",
+				$"BĂ¡o cĂ¡o rĂ¡c (MĂ£: #{report.ReportId}) Ä‘ang Ä‘Æ°á»£c xá»­ lĂ­ bá»Ÿi nhĂ¢n viĂªn thu gom",
 				report.ReportId);
 
 			// Get the citizen's UserId to notify them
@@ -415,7 +460,7 @@ public class WasteReportService : IWasteReportService
 			{
 				await _notificationService.SendNotificationAsync(
 					citizen.UserId,
-					$"Báo cáo rác của bạn (Mã: #{report.ReportId}) đang được xử lí",
+					$"BĂ¡o cĂ¡o rĂ¡c cá»§a báº¡n (MĂ£: #{report.ReportId}) Ä‘ang Ä‘Æ°á»£c xá»­ lĂ­",
 					report.ReportId);
 			}
 		}

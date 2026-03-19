@@ -60,10 +60,14 @@ public class ExceptionHandlingMiddleware
                 );
                 _logger.LogWarning(businessRuleException, "Business rule violation");
                 break;
-            
+
             default:
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                response = ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError);
+
+                response = ApiResponse<object>.ErrorResponse(
+                    exception.InnerException?.Message ?? exception.Message
+                );
+
                 _logger.LogError(exception, "Unhandled exception occurred");
                 
                 // Debug: Write exception to file

@@ -1,3 +1,4 @@
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.DataAccess.Entities;
 
@@ -10,7 +11,8 @@ public interface IWasteReportService
 	Task<WasteReport> CreateAsync(CreateWasteReportDto dto);
 	Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId);
 	Task AssignReportAsync(int reportId);
-	Task ProcessReportAsync(
+    Task CancelReportAsync(CancelReportRequestDto request);
+    Task ProcessReportAsync(
 		int reportId,
 		int collectorId,
 		bool isValid,

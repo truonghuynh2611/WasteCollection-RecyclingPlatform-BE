@@ -23,7 +23,8 @@ public class UnitOfWork : IUnitOfWork
     private IPointHistoryRepository? _pointHistories;
     private IRefreshTokenRepository? _refreshTokens;
     private IPendingRegistrationRepository? _pendingRegistrations;
-    
+    private IAreaRepository? _areas;
+
     public UnitOfWork(WasteManagementContext context)
     {
         _context = context;
@@ -60,14 +61,18 @@ public class UnitOfWork : IUnitOfWork
     public IPendingRegistrationRepository PendingRegistrations => 
         _pendingRegistrations ??= new PendingRegistrationRepository(_context);
     
+    public IAreaRepository Areas =>
+        _areas ??= new AreaRepository(_context);
+
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
     }
     
-    public async Task BeginTransactionAsync()
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
     {
         _transaction = await _context.Database.BeginTransactionAsync();
+        return _transaction;
     }
     
     public async Task CommitTransactionAsync()

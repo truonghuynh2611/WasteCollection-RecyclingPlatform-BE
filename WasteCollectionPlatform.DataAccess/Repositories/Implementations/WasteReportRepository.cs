@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
+using WasteCollectionPlatform.Common.Enums;
+using WasteCollectionPlatform.Common.Exceptions;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
@@ -64,6 +67,20 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         return wasteReport;
     }
 
+    public async Task CancelReportAsync(CancelReportRequestDto request)
+    {
+        var report = await GetByIdAsync(request.ReportId);
+        if (report == null)
+            throw new KeyNotFoundException("Report not found");
+
+        if (report.Status != ReportStatus.Pending)
+            throw new BusinessRuleException("Only reports in Pending status can be cancelled");
+
+        report.Status = ReportStatus.Cancelled;
+
+        await UpdateAsync(report);
+        await SaveChangesAsync();
+    }
     public override Task UpdateAsync(WasteReport wasteReport)
     {
         _context.WasteReports.Update(wasteReport);

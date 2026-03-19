@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
@@ -51,7 +52,10 @@ public class AreaRepository : IAreaRepository
     {
         return await _context.Areas.AnyAsync(a => a.AreaId == id);
     }
-
+    public async Task<bool> AnyAsync(Expression<Func<Area, bool>> predicate)
+    {
+        return await _context.Areas.AnyAsync(predicate);
+    }
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();

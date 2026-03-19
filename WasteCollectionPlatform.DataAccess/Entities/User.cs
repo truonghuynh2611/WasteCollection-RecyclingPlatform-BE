@@ -45,6 +45,8 @@ public partial class User
     [Column("ResetTokenExpiry")]
     public DateTime? ResetTokenExpiry { get; set; }
 
+    public int TokenVersion { get; set; } = 0;
+
     public virtual Citizen? Citizen { get; set; }
 
     public virtual Collector? Collector { get; set; }

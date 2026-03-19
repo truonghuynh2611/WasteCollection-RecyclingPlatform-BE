@@ -138,6 +138,7 @@ builder.Services.AddScoped<IReportImageRepository, ReportImageRepository>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IPointHistoryRepository, PointHistoryRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient();
@@ -149,15 +150,34 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IAreaService, AreaService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
+
 
 // Register FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationValidator>();
 
 var app = builder.Build();
+
+// Apply migrations and ensure schema is up to date
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
+    try
+    {
+        await context.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
+    }
+}
 
 using (var scope = app.Services.CreateScope())
 {

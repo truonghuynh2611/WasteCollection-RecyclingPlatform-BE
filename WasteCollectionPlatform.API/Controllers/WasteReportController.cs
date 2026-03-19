@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WasteCollectionPlatform.Business.Services.Interfaces;
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
+using WasteCollectionPlatform.Common.DTOs.Response.Common;
+using WasteCollectionPlatform.Common.Exceptions;
 
 namespace WasteCollectionPlatform.API.Controllers;
 
@@ -90,21 +95,6 @@ public class WasteReportController : ControllerBase
 		}
 	}
 
-	[HttpPost("assign/{id}")]
-	public async Task<IActionResult> Assign(int id)
-	{
-		try
-		{
-			await _wasteReportService.AssignReportAsync(id);
-			return Ok("Report assigned successfully");
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Error assigning waste report {ReportId}", id);
-			return BadRequest(ex.Message);
-		}
-	}
-
 	[HttpPost("process")]
 	public async Task<IActionResult> Process([FromBody] ProcessReportDto dto)
 	{
@@ -161,5 +151,61 @@ public class WasteReportController : ControllerBase
 			_logger.LogError(ex, "Error deleting waste report {ReportId}", id);
 			return BadRequest(ex.Message);
 		}
+	}
+
+	/// <summary>
+	/// Assign waste report to team (Admin only)
+	/// </summary>
+	/// <param name="id">Waste Report ID</param>
+	/// <returns>Success message</returns>
+	[HttpPost("{id}/assign")]
+	[Authorize]
+	public async Task<IActionResult> AssignReport(int id)
+	{
+		try
+		{
+			// Only admin users can assign reports
+			if (!IsAdmin())
+			{
+				return Forbid();
+			}
+
+			await _wasteReportService.AssignReportAsync(id);
+			return Ok("Report assigned successfully");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error assigning waste report {ReportId}", id);
+			return BadRequest(ex.Message);
+		}
+	}
+    [HttpPost("cancel-report")]
+    public async Task<IActionResult> CancelReport([FromBody] CancelReportRequestDto request)
+    {
+        try
+        {
+            // ? truy?n nguyên DTO
+            await _wasteReportService.CancelReportAsync(request);
+
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Report cancelled successfully"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling report {ReportId}", request.ReportId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+    private bool IsAdmin()
+	{
+		var adminIdClaim = User.FindFirst("adminId");
+		return adminIdClaim != null;
 	}
 }
