@@ -87,6 +87,11 @@ public class AdminController : ControllerBase
             _logger.LogWarning(ex, "Unauthorized admin creation attempt");
             return Unauthorized(ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (BadRequestException ex)
+        {
+            _logger.LogWarning(ex, "Bad request while creating admin");
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating admin");

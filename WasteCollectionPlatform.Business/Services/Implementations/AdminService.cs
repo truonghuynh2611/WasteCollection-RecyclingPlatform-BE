@@ -6,6 +6,8 @@ using WasteCollectionPlatform.Common.Exceptions;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace WasteCollectionPlatform.Business.Services.Implementations;
 
@@ -36,7 +38,7 @@ public class AdminService : IAdminService
         // Check email exists
         if (await _userRepo.EmailExistsAsync(request.Email))
         {
-            throw new Exception("Email already exists");
+            throw new BadRequestException("Email already exists");
         }
 
         // Verify super admin exists and is super admin
@@ -87,6 +89,42 @@ public class AdminService : IAdminService
             _logger.LogInformation($"Admin created: {admin.Id} by SuperAdmin: {superAdminId}");
 
             return MapToDto(admin, user);
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            var innerMessage = ex.InnerException?.Message ?? string.Empty;
+            var postgresException = ex.InnerException as PostgresException;
+
+            _logger.LogError(ex, "CreateAdmin DbUpdateException. Inner: {InnerMessage}", innerMessage);
+            Console.WriteLine(innerMessage);
+
+            if (postgresException?.SqlState == "23505")
+            {
+                if (postgresException.ConstraintName == "User_email_key")
+                {
+                    throw new BadRequestException("Email already exists", ex);
+                }
+
+                if (postgresException.ConstraintName == "Users_pkey")
+                {
+                    throw new BadRequestException("User ID sequence is out of sync with existing data", ex);
+                }
+
+                throw new BadRequestException($"Unique constraint violation: {postgresException.ConstraintName}", ex);
+            }
+
+            if (postgresException?.SqlState == "23503")
+            {
+                throw new BadRequestException("Invalid foreign key (CreatedBy or UserId)", ex);
+            }
+
+            if (postgresException?.SqlState == "23502")
+            {
+                throw new BadRequestException("Missing required field", ex);
+            }
+
+            throw new BadRequestException("Database update failed", ex);
         }
         catch (Exception ex)
         {
