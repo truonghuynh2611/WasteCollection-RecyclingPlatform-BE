@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using WasteCollectionPlatform.Business.Services.Interfaces;
@@ -158,6 +159,11 @@ public class VoucherService : IVoucherService
                 throw new System.Exception("Voucher đã hết hàng.");
 
             var citizen = await _unitOfWork.Citizens.GetByIdAsync(citizenId);
+            if (citizen == null)
+            {
+                citizen = await _unitOfWork.Citizens.GetByUserIdAsync(citizenId);
+            }
+
             if (citizen == null)
                 throw new System.Exception("Citizen không tồn tại.");
 

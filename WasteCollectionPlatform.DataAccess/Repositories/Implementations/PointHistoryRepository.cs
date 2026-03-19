@@ -18,4 +18,13 @@ public class PointHistoryRepository : GenericRepository<PointHistory>, IPointHis
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<PointHistory>> GetByCitizenIdWithDetailsAsync(int citizenId)
+    {
+        return await _dbSet
+            .Include(p => p.Voucher)
+            .Where(p => p.CitizenId == citizenId)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+    }
 }

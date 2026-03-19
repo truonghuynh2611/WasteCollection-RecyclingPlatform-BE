@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -59,8 +59,28 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
         }
         public async Task<IEnumerable<object>> GetAllAreasAsync()
         {
+            // We use UnitOfWork but for simplicity we can just get all and then map
+            // In a real app we'd use .Include() in the repository or a specialized query
             var areas = await _unitOfWork.Areas.GetAllAsync();
-            return areas.Select(a => new { a.AreaId, a.Name, a.DistrictId });
+            var districts = await _unitOfWork.Districts.GetAllAsync();
+            var teams = await _unitOfWork.Teams.GetAllAsync();
+            
+            return areas.Select(a => {
+                var district = districts.FirstOrDefault(d => d.DistrictId == a.DistrictId);
+                var areaTeams = teams.Where(t => t.AreaId == a.AreaId).ToList();
+                
+                return new {
+                    areaId = a.AreaId,
+                    name = a.Name,
+                    districtId = a.DistrictId,
+                    district = district != null ? new {
+                        districtId = district.DistrictId,
+                        districtName = district.DistrictName
+                    } : null,
+                    teamCount = areaTeams.Count,
+                    totalReports = 0 // Placeholder or fetch from waste reports
+                };
+            });
         }
 
         public async Task<object?> GetAreaByIdAsync(int areaId)

@@ -23,6 +23,7 @@ public class WasteReportService : IWasteReportService
 	private readonly HttpClient _httpClient;
 	private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
     private readonly ILogger<WasteReportService> _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
 
 	public WasteReportService(
@@ -36,7 +37,8 @@ public class WasteReportService : IWasteReportService
 		INotificationService notificationService,
 		HttpClient httpClient,
 		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env,
-		ILogger<WasteReportService> logger)
+		ILogger<WasteReportService> logger,
+		IUnitOfWork unitOfWork)
 
 	{
 		_wasteReportRepo = wasteReportRepo;
@@ -51,6 +53,7 @@ public class WasteReportService : IWasteReportService
 		_httpClient = httpClient;
 		_env = env;
 		_logger = logger;
+		_unitOfWork = unitOfWork;
 	}
 
 	public async Task<IEnumerable<WasteReport>> GetAllAsync()
@@ -73,6 +76,11 @@ public class WasteReportService : IWasteReportService
         }
         return await _wasteReportRepo.GetByCitizenIdAsync(citizen.CitizenId);
     }
+
+	public async Task<IEnumerable<WasteReport>> GetByCollectorIdAsync(int collectorId)
+	{
+		return await _wasteReportRepo.GetByCollectorIdAsync(collectorId);
+	}
 
 	public async Task<WasteReport?> GetByIdAsync(int id)
 	{
