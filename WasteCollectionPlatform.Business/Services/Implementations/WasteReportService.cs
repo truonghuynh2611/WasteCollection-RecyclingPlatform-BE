@@ -1,6 +1,9 @@
+using Microsoft.Extensions.Logging;
 using WasteCollectionPlatform.Business.Services.Interfaces;
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.Common.Enums;
+using WasteCollectionPlatform.Common.Exceptions;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
@@ -14,7 +17,8 @@ public class WasteReportService : IWasteReportService
 	private readonly ITeamRepository _teamRepo;
 	private readonly ICollectorRepository _collectorRepo;
 	private readonly IReportImageRepository _reportImageRepo;
-	private readonly HttpClient _httpClient;
+    private readonly ILogger<WasteReportService> _logger;
+    private readonly HttpClient _httpClient;
 
 	public WasteReportService(
 		IWasteReportRepository wasteReportRepo,
@@ -23,7 +27,9 @@ public class WasteReportService : IWasteReportService
 		ITeamRepository teamRepo,
 		ICollectorRepository collectorRepo,
 		IReportImageRepository reportImageRepo,
-		HttpClient httpClient)
+         ILogger<WasteReportService> logger,
+
+        HttpClient httpClient)
 	{
 		_wasteReportRepo = wasteReportRepo;
 		_citizenRepo = citizenRepo;
@@ -31,6 +37,7 @@ public class WasteReportService : IWasteReportService
 		_teamRepo = teamRepo;
 		_collectorRepo = collectorRepo;
 		_reportImageRepo = reportImageRepo;
+		_logger = logger;
 		_httpClient = httpClient;
 	}
 
@@ -173,8 +180,29 @@ public class WasteReportService : IWasteReportService
 		await _wasteReportRepo.UpdateAsync(report);
 		await _wasteReportRepo.SaveChangesAsync();
 	}
+    public async Task CancelReportAsync(CancelReportRequestDto request)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(request.ReportId);
+        if (report == null)
+            throw new KeyNotFoundException("Report not found");
 
-	public async Task ProcessReportAsync(
+        // Ch? cancel report Pending
+        if (report.Status != ReportStatus.Pending)
+            throw new BusinessRuleException("Only reports in Pending status can be cancelled");
+
+        // Ch? set Status = Cancelled, không thêm field CanceledReason
+        report.Status = ReportStatus.Cancelled;
+
+        await _wasteReportRepo.UpdateAsync(report);
+        await _wasteReportRepo.SaveChangesAsync();
+
+        // N?u mu?n, log lý do cancel
+        if (!string.IsNullOrEmpty(request.Reason))
+        {
+            _logger.LogInformation("Admin cancelled report {ReportId}. Reason: {Reason}", request.ReportId, request.Reason);
+        }
+    }
+    public async Task ProcessReportAsync(
 		int reportId,
 		int collectorId,
 		bool isValid,

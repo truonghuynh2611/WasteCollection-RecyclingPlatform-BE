@@ -135,7 +135,7 @@ public class AdminController : ControllerBase
             return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
-
+    
     /// <summary>
     /// Update admin information
     /// </summary>

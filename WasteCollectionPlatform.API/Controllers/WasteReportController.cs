@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WasteCollectionPlatform.Business.Services.Interfaces;
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
+using WasteCollectionPlatform.Common.DTOs.Response.Common;
+using WasteCollectionPlatform.Common.Exceptions;
 
 namespace WasteCollectionPlatform.API.Controllers;
 
@@ -146,8 +149,31 @@ public class WasteReportController : ControllerBase
 			return BadRequest(ex.Message);
 		}
 	}
+    [HttpPost("cancel-report")]
+    public async Task<IActionResult> CancelReport([FromBody] CancelReportRequestDto request)
+    {
+        try
+        {
+            // ? truy?n nguyên DTO
+            await _wasteReportService.CancelReportAsync(request);
 
-	private bool IsAdmin()
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Report cancelled successfully"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling report {ReportId}", request.ReportId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+    private bool IsAdmin()
 	{
 		var adminIdClaim = User.FindFirst("adminId");
 		return adminIdClaim != null;
