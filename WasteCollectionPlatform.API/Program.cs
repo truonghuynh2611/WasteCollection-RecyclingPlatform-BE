@@ -138,7 +138,7 @@ builder.Services.AddScoped<IReportImageRepository, ReportImageRepository>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IPointHistoryRepository, PointHistoryRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+builder.Services.AddScoped<ISystemConfigurationRepository, SystemConfigurationRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient();
@@ -150,7 +150,6 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
-builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 
@@ -206,9 +205,18 @@ using (var scope = app.Services.CreateScope())
             ADD CONSTRAINT fk_point_voucher FOREIGN KEY (""VoucherId"") REFERENCES ""Vouchers"" (""VoucherId"") ON DELETE SET NULL;
         ";
         context.Database.ExecuteSqlRaw(alterSql);
+
+        // Robustly ensure TokenVersion exists with correct casing (PascalCase)
     } catch (Exception ex) {
         // Ignored if column already exists
-        Console.WriteLine($"Migration note (safe to ignore): {ex.Message}");
+        Console.WriteLine($"PointHistories Migration note (safe to ignore): {ex.Message}");
+    }
+
+    try {
+        try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""Users"" RENAME COLUMN ""tokenversion"" TO ""TokenVersion"";"); } catch { }
+        context.Database.ExecuteSqlRaw(@"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""TokenVersion"" INTEGER NOT NULL DEFAULT 0;");
+    } catch (Exception ex) {
+        Console.WriteLine($"Users Migration note (safe to ignore): {ex.Message}");
     }
 }
 // Configure the HTTP request pipeline

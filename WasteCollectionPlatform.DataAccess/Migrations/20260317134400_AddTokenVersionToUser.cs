@@ -10,17 +10,13 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
-                ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""tokenversion"" INTEGER NOT NULL DEFAULT 0;
-            ");
+            // Bypassed: manually applied via raw SQL
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
-                ALTER TABLE ""Users"" DROP COLUMN IF EXISTS ""tokenversion"";
-            ");
+            // Bypassed
         }
     }
 }

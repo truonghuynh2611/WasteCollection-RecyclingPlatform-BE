@@ -19,7 +19,6 @@ namespace WasteCollectionPlatform.Business.Services.Implementations;
 public class AuthService : IAuthService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IAdminRepository _adminRepo;
     private readonly JwtHelper _jwtHelper;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
@@ -27,14 +26,12 @@ public class AuthService : IAuthService
     
     public AuthService(
         IUnitOfWork unitOfWork,
-        IAdminRepository adminRepo,
         JwtHelper jwtHelper,
         IConfiguration configuration,
         IEmailService emailService,
         ILogger<AuthService> logger)
     {
         _unitOfWork = unitOfWork;
-        _adminRepo = adminRepo;
         _jwtHelper = jwtHelper;
         _configuration = configuration;
         _emailService = emailService;
@@ -62,20 +59,6 @@ public class AuthService : IAuthService
             throw new UnauthorizedException(ErrorMessages.AccountInactive);
         }
 
-        // Check if user is admin
-        int? adminId = null;
-        bool isSuperAdmin = false;
-        Admin? adminProfile = null;
-
-        if (user.Role == UserRole.Admin)
-        {
-            adminProfile = await _adminRepo.GetByUserIdAsync(user.UserId);
-            if (adminProfile != null && adminProfile.Status)
-            {
-                adminId = adminProfile.Id;
-                isSuperAdmin = adminProfile.IsSuperAdmin;
-            }
-        }
         
         // Generate JWT access token with admin details if applicable
         var token = _jwtHelper.GenerateToken(
@@ -84,8 +67,8 @@ public class AuthService : IAuthService
             user.FullName, 
             user.Role.ToString(), 
             user.Status?.ToString() ?? "false",
-            adminId,
-            isSuperAdmin,
+            null,
+            false,
             user.TokenVersion
         );
         var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
@@ -106,12 +89,6 @@ public class AuthService : IAuthService
         
         await _unitOfWork.RefreshTokens.AddAsync(refreshTokenEntity);
 
-        // Update admin last login if admin
-        if (adminProfile != null)
-        {
-            adminProfile.LastLoginAt = DateTime.UtcNow;
-            await _adminRepo.UpdateAsync(adminProfile);
-        }
 
         await _unitOfWork.SaveChangesAsync();
 

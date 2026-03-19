@@ -164,7 +164,7 @@ public class WasteReportService : IWasteReportService
 		{
 			await _notificationService.SendNotificationToRoleAsync(
 				UserRole.Admin,
-				$"Báº¡n Ä‘ang cĂ³ 1 bĂ¡o cĂ¡o rĂ¡c má»›i tá»« ngÆ°á»i dĂ¢n (MĂ£: #{wasteReport.ReportId})",
+				$"Bạn đang có 1 báo cáo rác mới từ người dân (Mã: #{wasteReport.ReportId})",
 				wasteReport.ReportId);
 		}
 		catch (Exception ex)
@@ -304,7 +304,7 @@ public class WasteReportService : IWasteReportService
             throw new BusinessRuleException("Only reports in Pending status can be cancelled");
 
         // Ch? set Status = Cancelled, không thêm field CanceledReason
-        report.Status = ReportStatus.Cancelled;
+        report.Status = ReportStatus.Failed;
 
         await _wasteReportRepo.UpdateAsync(report);
         await _wasteReportRepo.SaveChangesAsync();
@@ -339,18 +339,18 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("Report has no assigned team");
 		}
 
-		var collector = await _collectorRepo.GetByIdAsync(collectorId);
-		if (collector == null)
+		var collector = collectorId > 0 ? await _collectorRepo.GetByIdAsync(collectorId) : null;
+		if (collectorId > 0 && collector == null)
 		{
 			throw new Exception("Collector not found");
 		}
 
-		if (collector.TeamId != report.TeamId)
+		if (collectorId > 0 && collector.TeamId != report.TeamId)
 		{
 			throw new Exception("You are not in the assigned team");
 		}
 
-		if (collector.Role != CollectorRole.Leader)
+		if (collectorId > 0 && collector.Role != CollectorRole.Leader)
 		{
 			throw new Exception("Only team leader can submit completion report");
 		}
@@ -380,24 +380,44 @@ public class WasteReportService : IWasteReportService
 		report.CollectorLatitude = latitude;
 		report.CollectorLongitude = longitude;
 
+        // Retrieve dynamic point configurations from DB
+        int pointsForCompleted = 10; // Default
+        int pointsForCancelled = -5; // Default
+        
+        var completedConfig = await _unitOfWork.SystemConfigurations.GetByKeyAsync("Points_CompletedReport");
+        if (completedConfig != null && int.TryParse(completedConfig.Value, out int parsedCompleted))
+        {
+            pointsForCompleted = parsedCompleted;
+        }
+        
+        var cancelledConfig = await _unitOfWork.SystemConfigurations.GetByKeyAsync("Points_CancelledReport");
+        if (cancelledConfig != null && int.TryParse(cancelledConfig.Value, out int parsedCancelled))
+        {
+            pointsForCancelled = parsedCancelled;
+        }
+
+        _logger.LogInformation("Config: Points_CompletedReport={Compl}, Points_CancelledReport={Canc}", pointsForCompleted, pointsForCancelled);
+
 		if (isValid)
 		{
-			report.Status = ReportStatus.Completed;
-			citizen.TotalPoints = (citizen.TotalPoints ?? 0) + 10;
+            _logger.LogInformation("Report {ReportId} is VALID. Awarding {Points} points to Citizen {CitizenId}", report.ReportId, pointsForCompleted, citizen.CitizenId);
+			report.Status = ReportStatus.Collected;
+			citizen.TotalPoints = (citizen.TotalPoints ?? 0) + pointsForCompleted;
             
             // Record PointHistory
             var pointLog = new PointHistory
             {
                 CitizenId = citizen.CitizenId,
-                PointAmount = 10,
+                ReportId = report.ReportId,
+                PointAmount = pointsForCompleted,
                 CreatedAt = DateTime.Now
             };
             await _unitOfWork.PointHistories.AddAsync(pointLog);
 		}
 		else
 		{
-			report.Status = ReportStatus.Cancelled;
-			citizen.TotalPoints = (citizen.TotalPoints ?? 0) - 5;
+			report.Status = ReportStatus.Failed;
+			citizen.TotalPoints = (citizen.TotalPoints ?? 0) + pointsForCancelled; // pointsForCancelled is negative
 
 			if (citizen.TotalPoints < 0)
 			{
@@ -408,7 +428,8 @@ public class WasteReportService : IWasteReportService
             var pointLog = new PointHistory
             {
                 CitizenId = citizen.CitizenId,
-                PointAmount = -5,
+                ReportId = report.ReportId,
+                PointAmount = pointsForCancelled,
                 CreatedAt = DateTime.Now
             };
             await _unitOfWork.PointHistories.AddAsync(pointLog);
@@ -450,7 +471,7 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("You are not in the assigned team");
 		}
 
-		report.Status = ReportStatus.Processing;
+		report.Status = ReportStatus.OnTheWay;
 		await _wasteReportRepo.UpdateAsync(report);
 		await _wasteReportRepo.SaveChangesAsync();
 
@@ -495,4 +516,30 @@ public class WasteReportService : IWasteReportService
 		await _wasteReportRepo.SaveChangesAsync();
 		return true;
 	}
+
+    public async Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(reportId);
+        if (report == null) throw new KeyNotFoundException("Report not found");
+
+        // If status remains the same, do nothing
+        if (report.Status == newStatus) return;
+
+        // Special handling for Completed (Collected) or Failed
+        if (newStatus == ReportStatus.Collected || newStatus == ReportStatus.Failed)
+        {
+            // Use existing ProcessReportAsync logic (or a private helper)
+            await ProcessReportAsync(
+                reportId, 
+                0, // System update (collectorId not strictly validated if skip conditions met)
+                newStatus == ReportStatus.Collected, 
+                null, null, null);
+        }
+        else
+        {
+            report.Status = newStatus;
+            await _wasteReportRepo.UpdateAsync(report);
+            await _wasteReportRepo.SaveChangesAsync();
+        }
+    }
 }

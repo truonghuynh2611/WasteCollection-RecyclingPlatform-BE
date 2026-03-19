@@ -184,7 +184,7 @@ public class WasteReportController : ControllerBase
     {
         try
         {
-            // ? truy?n nguyên DTO
+            // ? truy?n nguyï¿½n DTO
             await _wasteReportService.CancelReportAsync(request);
 
             return Ok(ApiResponse<object>.SuccessResponse(null, "Report cancelled successfully"));
@@ -205,7 +205,7 @@ public class WasteReportController : ControllerBase
     }
     private bool IsAdmin()
 	{
-		var adminIdClaim = User.FindFirst("adminId");
-		return adminIdClaim != null;
+		
+		return User.IsInRole("Admin");
 	}
 }

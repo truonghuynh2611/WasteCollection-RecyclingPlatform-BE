@@ -40,6 +40,7 @@ public partial class WasteManagementContext : DbContext
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
     public virtual DbSet<PendingRegistration> PendingRegistrations { get; set; }
 
+    public virtual DbSet<Admin> Admins { get; set; }
 
     public virtual DbSet<SystemConfiguration> SystemConfigurations { get; set; }
 
@@ -355,6 +356,46 @@ public partial class WasteManagementContext : DbContext
                 .HasConstraintName("fk_report_citizen");
         });
 
+        modelBuilder.Entity<Admin>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_pkey");
+
+            entity.ToTable("Admins");
+
+            entity.HasIndex(e => e.UserId, "admin_userid_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("AdminId");
+            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.Department)
+                .HasMaxLength(100)
+                .HasColumnName("Department");
+            entity.Property(e => e.Level)
+                .HasDefaultValue(1)
+                .HasColumnName("Level");
+            entity.Property(e => e.IsSuperAdmin)
+                .HasDefaultValue(false)
+                .HasColumnName("IsSuperAdmin");
+            entity.Property(e => e.Status)
+                .HasDefaultValue(true)
+                .HasColumnName("Status");
+            entity.Property(e => e.CreatedBy).HasColumnName("CreatedBy");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("CreatedAt");
+            entity.Property(e => e.LastLoginAt)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("LastLoginAt");
+
+            entity.HasOne(d => d.User).WithOne()
+                .HasForeignKey<Admin>(d => d.UserId)
+                .HasConstraintName("fk_admin_user");
+
+            entity.HasOne(d => d.CreatorUser).WithMany()
+                .HasForeignKey(d => d.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_admin_createdby");
+        });
 
         modelBuilder.Entity<SystemConfiguration>().HasData(
             new SystemConfiguration { Key = "Points_CompletedReport", Value = "10", Description = "Number of points earned by citizen when a waste report is successfully completed." },

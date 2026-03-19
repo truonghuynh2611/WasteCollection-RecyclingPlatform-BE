@@ -18,6 +18,7 @@ public interface IUnitOfWork : IDisposable
     IRefreshTokenRepository RefreshTokens { get; }
     IPendingRegistrationRepository PendingRegistrations { get; }
     IAreaRepository Areas { get; }
+    ISystemConfigurationRepository SystemConfigurations { get; }
 
     Task<int> SaveChangesAsync();
     Task<IDbContextTransaction> BeginTransactionAsync();

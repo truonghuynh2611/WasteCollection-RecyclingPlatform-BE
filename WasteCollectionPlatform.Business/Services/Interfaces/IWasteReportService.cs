@@ -1,6 +1,7 @@
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.DataAccess.Entities;
+using WasteCollectionPlatform.Common.Enums;
 
 namespace WasteCollectionPlatform.Business.Services.Interfaces;
 
@@ -22,4 +23,5 @@ public interface IWasteReportService
 		decimal? longitude);
 	Task<bool> DeleteAsync(int id);
 	Task ConfirmReportAsync(int reportId, int collectorId);
+    Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
 }

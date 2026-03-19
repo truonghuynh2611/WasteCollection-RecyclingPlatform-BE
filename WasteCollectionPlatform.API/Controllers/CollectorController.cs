@@ -97,9 +97,7 @@ public class CollectorController : ControllerBase
 
             if (Enum.TryParse<ReportStatus>(status, true, out var newStatus))
             {
-                report.Status = newStatus;
-                await _unitOfWork.WasteReports.UpdateAsync(report);
-                await _unitOfWork.SaveChangesAsync();
+                await _wasteReportService.UpdateReportStatusAsync(reportId, newStatus);
                 return Ok(ApiResponse<object>.SuccessResponse(null, "Status updated successfully."));
             }
 

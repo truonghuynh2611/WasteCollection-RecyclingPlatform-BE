@@ -57,7 +57,8 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during login for email: {Email}", request.Email);
-            return StatusCode(500, ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError));
+            var detailedError = $"{ErrorMessages.InternalServerError} | {ex.Message} | {ex.InnerException?.Message}";
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(detailedError));
         }
     }
     
