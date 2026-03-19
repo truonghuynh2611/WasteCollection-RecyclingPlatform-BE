@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Entities;
@@ -40,5 +41,48 @@ public class TeamRepository : GenericRepository<Team>, ITeamRepository
             .Include(t => t.Collectors)
             .Include(t => t.ReportAssignments)
             .FirstOrDefaultAsync(t => t.AreaId == areaId);
+    }
+    public async Task<bool> AnyAsync(Expression<Func<Team, bool>> predicate)
+    {
+        return await _context.Teams.AnyAsync(predicate); // ?? EF Core AnyAsync
+    }
+    public async Task AddCollectorAsync(int teamId, Collector collector)
+    {
+        var team = await _dbSet
+            .Include(t => t.Collectors)
+            .FirstOrDefaultAsync(t => t.TeamId == teamId);
+
+        if (team == null)
+            throw new KeyNotFoundException($"Team with Id {teamId} not found.");
+
+        team.Collectors.Add(collector);
+    }
+    public async Task<List<Collector>> GetCollectorsByTeamIdAsync(int teamId)
+    {
+        var team = await _context.Teams
+            .Include(t => t.Collectors)
+            .FirstOrDefaultAsync(t => t.TeamId == teamId);
+
+        if (team == null)
+            throw new KeyNotFoundException("Team not found");
+
+        return team.Collectors.ToList();
+    }
+    public async Task RemoveCollectorAsync(int teamId, int collectorId)
+    {
+        var team = await _context.Teams
+            .Include(t => t.Collectors)
+            .FirstOrDefaultAsync(t => t.TeamId == teamId);
+
+        if (team == null)
+            throw new KeyNotFoundException("Team not found");
+
+        var collector = team.Collectors.FirstOrDefault(c => c.CollectorId == collectorId);
+        if (collector == null)
+            throw new KeyNotFoundException("Collector not found in this team");
+
+        team.Collectors.Remove(collector);
+
+        await _context.SaveChangesAsync();
     }
 }

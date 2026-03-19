@@ -196,4 +196,43 @@ public class TeamController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+    [HttpGet("{teamId}/collectors")]
+    public async Task<IActionResult> GetCollectorsByTeam(int teamId)
+    {
+        try
+        {
+            var collectors = await _teamService.GetCollectorsByTeamIdAsync(teamId);
+            return Ok(ApiResponse<object>.SuccessResponse(collectors, "Collectors retrieved successfully"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving collectors for team {TeamId}", teamId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.InnerException?.Message ?? ex.Message));
+        }
+    }
+
+    [HttpDelete("collector")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RemoveCollector([FromBody] RemoveCollectorFromTeamRequestDto request)
+    {
+        try
+        {
+            await _teamService.RemoveCollectorFromTeamAsync(request);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Collector removed from team successfully"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing collector {CollectorId} from team {TeamId}", request.CollectorId, request.TeamId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.InnerException?.Message ?? ex.Message));
+        }
+    }
 }

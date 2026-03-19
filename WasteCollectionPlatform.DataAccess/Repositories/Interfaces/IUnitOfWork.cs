@@ -17,7 +17,8 @@ public interface IUnitOfWork : IDisposable
     IVoucherRepository Vouchers { get; }
     IPointHistoryRepository PointHistories { get; }
     IRefreshTokenRepository RefreshTokens { get; }
-    
+    IAreaRepository Areas { get; }
+
     Task<int> SaveChangesAsync();
     Task<IDbContextTransaction> BeginTransactionAsync();
     Task CommitTransactionAsync();
