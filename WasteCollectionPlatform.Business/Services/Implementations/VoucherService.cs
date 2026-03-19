@@ -87,7 +87,19 @@ public class VoucherService : IVoucherService
 
     public async Task<IEnumerable<VoucherResponseDto>> GetByCitizenIdAsync(int citizenId)
     {
-        var vouchers = await _voucherRepo.GetByCitizenIdAsync(citizenId);
+        // Try to find citizen by CitizenId first, then by UserId (fallback)
+        var citizen = await _unitOfWork.Citizens.GetByIdAsync(citizenId);
+        if (citizen == null)
+        {
+            citizen = await _unitOfWork.Citizens.GetByUserIdAsync(citizenId);
+        }
+
+        if (citizen == null)
+        {
+            return new List<VoucherResponseDto>();
+        }
+
+        var vouchers = await _voucherRepo.GetByCitizenIdAsync(citizen.CitizenId);
         return vouchers.Select(v => MapToResponse(v));
     }
 

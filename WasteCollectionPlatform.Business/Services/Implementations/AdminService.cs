@@ -59,7 +59,7 @@ public class AdminService : IAdminService
                 Phone = request.Phone,
                 Role = UserRole.Admin,
                 Status = true,
-                Emailverified = true,
+                EmailVerified = true,
                 TokenVersion = 0
             };
 

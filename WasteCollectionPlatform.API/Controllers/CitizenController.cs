@@ -81,14 +81,21 @@ public class CitizenController : ControllerBase
     {
         try
         {
+            // Try as CitizenId first
             var citizen = await _unitOfWork.Citizens.GetByIdAsync(id);
+            
+            // Fallback to UserId
+            if (citizen == null)
+            {
+                citizen = await _unitOfWork.Citizens.GetByUserIdAsync(id);
+            }
             
             if (citizen == null)
             {
                 return NotFound(new ApiResponse<object>
                 {
                     Success = false,
-                    Message = $"Citizen with user ID {id} not found."
+                    Message = $"Citizen with ID {id} not found."
                 });
             }
 
