@@ -53,8 +53,8 @@ public class AuthService : IAuthService
             throw new UnauthorizedException(ErrorMessages.InvalidCredentials);
         }
         
-        // Check user status (true = active, false/null = inactive)
-        if (user.Status != true)
+        // Check user status (true/null = active, false = inactive)
+        if (user.Status == false)
         {
             throw new UnauthorizedException(ErrorMessages.AccountInactive);
         }
@@ -86,12 +86,14 @@ public class AuthService : IAuthService
         await _unitOfWork.RefreshTokens.AddAsync(refreshTokenEntity);
         await _unitOfWork.SaveChangesAsync();
         
-        // Get CitizenId if user is a citizen
+        // Get CitizenId and TotalPoints if user is a citizen
         int? citizenId = null;
+        int totalPoints = 0;
         if (user.Role == UserRole.Citizen)
         {
             var citizen = await _unitOfWork.Citizens.GetByUserIdAsync(user.UserId);
             citizenId = citizen?.CitizenId;
+            totalPoints = citizen?.TotalPoints ?? 0;
         }
 
         return new AuthResponseDto
@@ -104,6 +106,7 @@ public class AuthService : IAuthService
             Role = user.Role.ToString(),
             Status = user.Status ?? false,
             CitizenId = citizenId,
+            TotalPoints = totalPoints,
             ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
         };
     }

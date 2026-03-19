@@ -19,7 +19,6 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Collector> Collectors { get; set; }
 
-
     public virtual DbSet<District> Districts { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
@@ -298,6 +297,11 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.VoucherName)
                 .HasMaxLength(150)
                 .HasColumnName("VoucherName");
+            entity.Property(e => e.Description).HasColumnName("Description");
+            entity.Property(e => e.VoucherCode).HasMaxLength(50).HasColumnName("VoucherCode");
+            entity.Property(e => e.Image).HasColumnName("Image");
+            entity.Property(e => e.Category).HasMaxLength(50).HasColumnName("Category");
+            entity.Property(e => e.ExpiryDays).HasColumnName("ExpiryDays");
         });
 
         modelBuilder.Entity<WasteReport>(entity =>

@@ -3,6 +3,7 @@ using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace WasteCollectionPlatform.Business.Services.Implementations;
 
@@ -15,8 +16,10 @@ public class WasteReportService : IWasteReportService
 	private readonly ICollectorRepository _collectorRepo;
 	private readonly IUserRepository _userRepo;
 	private readonly IReportImageRepository _reportImageRepo;
+	private readonly INotificationService _notificationService;
 	private readonly HttpClient _httpClient;
 	private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
+	private readonly ILogger<WasteReportService> _logger;
 
 	public WasteReportService(
 		IWasteReportRepository wasteReportRepo,
@@ -26,8 +29,10 @@ public class WasteReportService : IWasteReportService
 		ICollectorRepository collectorRepo,
 		IUserRepository userRepo,
 		IReportImageRepository reportImageRepo,
+		INotificationService notificationService,
 		HttpClient httpClient,
-		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
+		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env,
+		ILogger<WasteReportService> logger)
 	{
 		_wasteReportRepo = wasteReportRepo;
 		_citizenRepo = citizenRepo;
@@ -36,8 +41,10 @@ public class WasteReportService : IWasteReportService
 		_collectorRepo = collectorRepo;
 		_userRepo = userRepo;
 		_reportImageRepo = reportImageRepo;
+		_notificationService = notificationService;
 		_httpClient = httpClient;
 		_env = env;
+		_logger = logger;
 	}
 
 	public async Task<IEnumerable<WasteReport>> GetAllAsync()
@@ -137,6 +144,19 @@ public class WasteReportService : IWasteReportService
 			await _reportImageRepo.AddAsync(image);
 		}
 		await _wasteReportRepo.SaveChangesAsync();
+
+		// Notify all Admins about the new report
+		try
+		{
+			await _notificationService.SendNotificationToRoleAsync(
+				UserRole.Admin,
+				$"Bạn đang có 1 báo cáo rác mới từ người dân (Mã: #{wasteReport.ReportId})",
+				wasteReport.ReportId);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Failed to send notification for new report {ReportId}", wasteReport.ReportId);
+		}
 
 		return wasteReport;
 	}
@@ -245,6 +265,19 @@ public class WasteReportService : IWasteReportService
 		await _teamRepo.UpdateAsync(selectedTeam);
 		await _wasteReportRepo.UpdateAsync(report);
 		await _wasteReportRepo.SaveChangesAsync();
+
+		// Notify all Collectors in the assigned team
+		try
+		{
+			await _notificationService.SendNotificationToTeamAsync(
+				selectedTeam.TeamId,
+				$"Bạn vừa được phân công thu gom một đơn báo cáo rác (Mã: #{report.ReportId})",
+				report.ReportId);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Failed to send notification for assigned report {ReportId}", report.ReportId);
+		}
 	}
 
 	public async Task ProcessReportAsync(
@@ -338,6 +371,58 @@ public class WasteReportService : IWasteReportService
 		await _wasteReportRepo.UpdateAsync(report);
 		await _citizenRepo.UpdateAsync(citizen);
 		await _wasteReportRepo.SaveChangesAsync();
+	}
+
+	public async Task ConfirmReportAsync(int reportId, int collectorId)
+	{
+		var report = await _wasteReportRepo.GetByIdAsync(reportId);
+		if (report == null)
+		{
+			throw new Exception("Report not found");
+		}
+
+		if (report.Status != ReportStatus.Assigned)
+		{
+			throw new Exception("Report must be in Assigned status to confirm");
+		}
+
+		var collector = await _collectorRepo.GetByIdAsync(collectorId);
+		if (collector == null)
+		{
+			throw new Exception("Collector not found");
+		}
+
+		if (collector.TeamId != report.TeamId)
+		{
+			throw new Exception("You are not in the assigned team");
+		}
+
+		report.Status = ReportStatus.Processing;
+		await _wasteReportRepo.UpdateAsync(report);
+		await _wasteReportRepo.SaveChangesAsync();
+
+		// Notify Admin and Citizen that the report is being processed
+		try
+		{
+			await _notificationService.SendNotificationToRoleAsync(
+				UserRole.Admin,
+				$"Báo cáo rác (Mã: #{report.ReportId}) đang được xử lí bởi nhân viên thu gom",
+				report.ReportId);
+
+			// Get the citizen's UserId to notify them
+			var citizen = await _citizenRepo.GetByIdAsync(report.CitizenId);
+			if (citizen != null)
+			{
+				await _notificationService.SendNotificationAsync(
+					citizen.UserId,
+					$"Báo cáo rác của bạn (Mã: #{report.ReportId}) đang được xử lí",
+					report.ReportId);
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Failed to send notification for confirmed report {ReportId}", report.ReportId);
+		}
 	}
 
 	public async Task<bool> DeleteAsync(int id)

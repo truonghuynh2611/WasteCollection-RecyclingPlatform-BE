@@ -127,6 +127,21 @@ public class WasteReportController : ControllerBase
 		}
 	}
 
+	[HttpPost("confirm/{id}")]
+	public async Task<IActionResult> Confirm(int id, [FromQuery] int collectorId)
+	{
+		try
+		{
+			await _wasteReportService.ConfirmReportAsync(id, collectorId);
+			return Ok("Report confirmed and is now being processed");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error confirming waste report {ReportId}", id);
+			return BadRequest(ex.Message);
+		}
+	}
+
 	[HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(int id)
 	{

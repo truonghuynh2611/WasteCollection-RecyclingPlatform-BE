@@ -9,6 +9,8 @@ using Microsoft.OpenApi.Models;
 using Npgsql;
 using Npgsql.NameTranslation;
 using WasteCollectionPlatform.API.Middleware;
+using WasteCollectionPlatform.API.Hubs;
+using WasteCollectionPlatform.API.Services;
 using WasteCollectionPlatform.Business.Services.Implementations;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Business.Validators;
@@ -143,7 +145,13 @@ builder.Services.AddHttpClient();
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWasteReportService, WasteReportService>();
-// Add other services here as they are implemented
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
+builder.Services.AddScoped<IVoucherService, VoucherService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 // Register FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -167,6 +175,21 @@ using (var scope = app.Services.CreateScope())
             );";
         context.Database.ExecuteSqlRaw(sql);
     } catch {}
+
+    try {
+        // Ensure VoucherId exists in PointHistories (missed in previous manual migrations)
+        string alterSql = @"
+            ALTER TABLE ""PointHistories"" 
+            ADD COLUMN ""VoucherId"" integer NULL;
+            
+            ALTER TABLE ""PointHistories""
+            ADD CONSTRAINT fk_point_voucher FOREIGN KEY (""VoucherId"") REFERENCES ""Vouchers"" (""VoucherId"") ON DELETE SET NULL;
+        ";
+        context.Database.ExecuteSqlRaw(alterSql);
+    } catch (Exception ex) {
+        // Ignored if column already exists
+        Console.WriteLine($"Migration note (safe to ignore): {ex.Message}");
+    }
 }
 // Configure the HTTP request pipeline
 // Enable Swagger in all environments (for development/testing purposes)
@@ -192,5 +215,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hub
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

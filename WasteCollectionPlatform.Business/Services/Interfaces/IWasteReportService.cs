@@ -18,4 +18,5 @@ public interface IWasteReportService
 		decimal? latitude,
 		decimal? longitude);
 	Task<bool> DeleteAsync(int id);
+	Task ConfirmReportAsync(int reportId, int collectorId);
 }
