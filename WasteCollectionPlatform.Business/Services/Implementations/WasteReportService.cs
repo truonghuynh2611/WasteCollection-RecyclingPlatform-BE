@@ -6,7 +6,6 @@ using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.Common.Exceptions;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace WasteCollectionPlatform.Business.Services.Implementations;
 
@@ -541,5 +540,28 @@ public class WasteReportService : IWasteReportService
             await _wasteReportRepo.UpdateAsync(report);
             await _wasteReportRepo.SaveChangesAsync();
         }
+    }
+
+    public async Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(id);
+        if (report == null) throw new KeyNotFoundException("Report not found");
+
+        if (report.Status != ReportStatus.Pending)
+        {
+            throw new BusinessRuleException("Only pending reports can be updated");
+        }
+
+        report.Description = dto.Description;
+        report.WasteType = dto.WasteType;
+        report.AreaId = dto.AreaId;
+        
+        if (dto.Latitude.HasValue) report.CitizenLatitude = dto.Latitude.Value;
+        if (dto.Longitude.HasValue) report.CitizenLongitude = dto.Longitude.Value;
+
+        await _wasteReportRepo.UpdateAsync(report);
+        await _wasteReportRepo.SaveChangesAsync();
+
+        return report;
     }
 }

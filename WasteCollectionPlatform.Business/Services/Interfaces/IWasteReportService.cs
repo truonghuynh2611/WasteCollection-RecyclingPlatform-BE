@@ -24,4 +24,5 @@ public interface IWasteReportService
 	Task<bool> DeleteAsync(int id);
 	Task ConfirmReportAsync(int reportId, int collectorId);
     Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
+    Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto);
 }

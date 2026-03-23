@@ -203,6 +203,35 @@ public class WasteReportController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateWasteReportDto dto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _wasteReportService.UpdateAsync(id, dto);
+            return Ok(result);
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating waste report {ReportId}", id);
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     private bool IsAdmin()
 	{
 		
