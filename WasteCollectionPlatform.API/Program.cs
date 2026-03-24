@@ -20,6 +20,7 @@ using WasteCollectionPlatform.Common.Helpers;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Repositories.Implementations;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
+using WasteCollectionPlatform.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();
 
 // Configure Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>
@@ -242,7 +244,10 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseStaticFiles();
+
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 
 // Map SignalR hub
 app.MapHub<NotificationHub>("/notificationHub");

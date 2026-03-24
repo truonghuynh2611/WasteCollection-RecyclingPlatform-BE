@@ -465,54 +465,40 @@ public class AuthService : IAuthService
         
         return true;
     }
-
-    public async Task<bool> ResendVerificationCodeAsync(string email)
+    public async Task<bool> ResendVerificationEmailAsync(string email)
     {
-        var pending = await _unitOfWork.PendingRegistrations.GetByEmailAsync(email);
-        if (pending == null)
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        
+        if (user == null)
         {
-            throw new NotFoundException("Không tìm thấy thông tin đăng ký cho email này.");
+            throw new NotFoundException("User not found.");
         }
-
-        // Generate new code
-        var newCode = new Random().Next(100000, 999999).ToString();
-        pending.VerificationCode = newCode;
-        pending.Expiry = DateTime.UtcNow.AddHours(2);
-
-        await _unitOfWork.PendingRegistrations.UpdateAsync(pending);
+        
+        if (user.Emailverified)
+        {
+            throw new BusinessRuleException("Email is already verified.");
+        }
+        
+        // Generate new verification token
+        user.Verificationtoken = Guid.NewGuid().ToString();
+        user.Verificationtokenexpiry = DateTime.UtcNow.AddHours(24);
+        
         await _unitOfWork.SaveChangesAsync();
-
-        // Resend email
+        
+        // Send email (async)
+        var verificationLink = $"http://localhost:5173/verify-email?token={user.Verificationtoken}";
         _ = Task.Run(async () =>
         {
             try
             {
-                var emailBody = $@"
-                    <html>
-                    <body style='font-family: Arial, sans-serif;'>
-                        <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;'>
-                            <h2 style='color: #2e7d32; text-align: center;'>Gửi lại mã xác thực Green Vietnam</h2>
-                            <p>Xin chào <strong>{pending.FullName}</strong>,</p>
-                            <p>Đây là mã xác thực mới của bạn:</p>
-                            <div style='background-color: #f1f8e9; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2e7d32; border-radius: 5px; margin: 20px 0;'>
-                                {newCode}
-                            </div>
-                            <p>Mã này sẽ hết hạn trong vòng 2 giờ.</p>
-                            <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
-                            <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;' />
-                            <p style='font-size: 12px; color: #888; text-align: center;'>Đội ngũ Green Vietnam</p>
-                        </div>
-                    </body>
-                    </html>";
-                
-                await _emailService.SendEmailAsync(pending.Email, "Gửi lại mã xác thực tài khoản Green Vietnam", emailBody);
+                await _emailService.SendEmailAsync(user.Email, "Verify your email", $"Please verify your email by clicking <a href='{verificationLink}'>here</a>.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Không thể gửi lại email xác thực cho {Email}", pending.Email);
+                _logger.LogError(ex, "Failed to resend verification email to {Email}", user.Email);
             }
         });
-
+        
         return true;
     }
 }
