@@ -74,7 +74,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Map enums with NpgsqlNullNameTranslator - matches PascalCase values in DB ('Admin', 'Citizen'...)
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString!);
 dataSourceBuilder.MapEnum<UserRole>("user_role", new NpgsqlNullNameTranslator());
-dataSourceBuilder.MapEnum<CollectorRole>("collector_role", new NpgsqlNullNameTranslator());
+dataSourceBuilder.MapEnum<ReportStatus>("report_status", new NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<ReportStatus>("report_status", new NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<TeamType>("team_type", new NpgsqlNullNameTranslator());
 
@@ -197,6 +197,22 @@ using (var scope = app.Services.CreateScope())
     } catch {}
 
     try {
+        string refreshTokenSql = @"
+            CREATE TABLE IF NOT EXISTS ""RefreshTokens"" (
+                ""RefreshTokenId"" SERIAL PRIMARY KEY,
+                ""UserId"" INTEGER NOT NULL,
+                ""Token"" VARCHAR(500) NOT NULL UNIQUE,
+                ""ExpiresAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                ""CreatedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ""IsRevoked"" BOOLEAN DEFAULT FALSE,
+                ""RevokedAt"" TIMESTAMP WITHOUT TIME ZONE,
+                CONSTRAINT fk_refreshtoken_user FOREIGN KEY (""UserId"") REFERENCES ""Users""(""UserId"") ON DELETE CASCADE
+            );
+        ";
+        context.Database.ExecuteSqlRaw(refreshTokenSql);
+    } catch {}
+
+    try {
         // Ensure VoucherId exists in PointHistories (missed in previous manual migrations)
         string alterSql = @"
             ALTER TABLE ""PointHistories"" 
@@ -243,12 +259,7 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStaticFiles();
-
 app.MapControllers();
-app.MapHub<NotificationHub>("/notificationHub");
-
-// Map SignalR hub
 app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

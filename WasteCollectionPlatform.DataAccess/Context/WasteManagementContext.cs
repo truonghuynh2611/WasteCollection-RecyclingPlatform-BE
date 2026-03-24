@@ -50,8 +50,7 @@ public partial class WasteManagementContext : DbContext
             .HasPostgresEnum("point_transaction_type", new[] { "Earn", "Redeem" })
             .HasPostgresEnum("report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled" })
             .HasPostgresEnum("team_type", new[] { "Main", "Support" })
-            .HasPostgresEnum<UserRole>("user_role")
-            .HasPostgresEnum<CollectorRole>("collector_role");
+            .HasPostgresEnum<UserRole>("user_role");
 
         modelBuilder.Entity<Area>(entity =>
         {
@@ -102,6 +101,7 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.CollectorId).HasColumnName("CollectorId");
             entity.Property(e => e.Role)
                 .HasColumnName("Role")
+                .HasConversion<int>()
                 .HasDefaultValue(CollectorRole.Member);
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)

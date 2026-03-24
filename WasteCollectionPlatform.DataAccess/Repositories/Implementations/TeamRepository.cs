@@ -20,7 +20,7 @@ public class TeamRepository : GenericRepository<Team>, ITeamRepository
     {
         return await _dbSet
             .Include(t => t.Area)
-            .Include(t => t.Collectors)
+            .Include(t => t.Collectors).ThenInclude(c => c.User)
             .FirstOrDefaultAsync(t => t.TeamId == teamId);
     }
     
@@ -29,7 +29,7 @@ public class TeamRepository : GenericRepository<Team>, ITeamRepository
         return await _dbSet
             .Where(t => t.AreaId == areaId)
             .Include(t => t.Area)
-            .Include(t => t.Collectors)
+            .Include(t => t.Collectors).ThenInclude(c => c.User)
             .ToListAsync();
     }
 
@@ -38,7 +38,7 @@ public class TeamRepository : GenericRepository<Team>, ITeamRepository
         _ = teamType;
 
         return await _context.Teams
-            .Include(t => t.Collectors)
+            .Include(t => t.Collectors).ThenInclude(c => c.User)
             .Include(t => t.ReportAssignments)
             .FirstOrDefaultAsync(t => t.AreaId == areaId);
     }
@@ -60,7 +60,7 @@ public class TeamRepository : GenericRepository<Team>, ITeamRepository
     public async Task<List<Collector>> GetCollectorsByTeamIdAsync(int teamId)
     {
         var team = await _context.Teams
-            .Include(t => t.Collectors)
+            .Include(t => t.Collectors).ThenInclude(c => c.User)
             .FirstOrDefaultAsync(t => t.TeamId == teamId);
 
         if (team == null)

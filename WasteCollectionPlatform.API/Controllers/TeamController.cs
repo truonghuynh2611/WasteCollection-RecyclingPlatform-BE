@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
+using WasteCollectionPlatform.Common.DTOs.Request.Collector;
 using WasteCollectionPlatform.Common.DTOs.Response.Common;
 using WasteCollectionPlatform.Common.Exceptions;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
@@ -40,29 +41,25 @@ public class TeamController : ControllerBase
         {
             var teams = await _unitOfWork.Teams.GetAllAsync();
             
-            var teamDtos = teams.Select(t => new
+            var result = new List<object>();
+            foreach (var t in teams)
             {
-                teamId = t.TeamId,
-                name = t.Name,
-                areaId = t.AreaId
-            }).ToList();
+                var collectors = await _teamService.GetCollectorsByTeamIdAsync(t.TeamId);
+                result.Add(new
+                {
+                    teamId = t.TeamId,
+                    name = t.Name,
+                    areaId = t.AreaId,
+                    collectors = collectors
+                });
+            }
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Message = "Teams retrieved successfully.",
-                Data = teamDtos
-            });
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Teams retrieved successfully."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving teams");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                Message = "An error occurred while retrieving teams.",
-                Errors = new List<string> { ex.Message }
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
 
@@ -82,37 +79,25 @@ public class TeamController : ControllerBase
             
             if (team == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    Message = $"Team with ID {id} not found.",
-                    Errors = new List<string> { "Team not found." }
-                });
+                return NotFound(ApiResponse<object>.ErrorResponse($"Team with ID {id} not found."));
             }
+
+            var collectors = await _teamService.GetCollectorsByTeamIdAsync(id);
 
             var teamDto = new
             {
                 teamId = team.TeamId,
                 name = team.Name,
-                areaId = team.AreaId
+                areaId = team.AreaId,
+                collectors = collectors
             };
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Message = "Team retrieved successfully.",
-                Data = teamDto
-            });
+            return Ok(ApiResponse<object>.SuccessResponse(teamDto, "Team retrieved successfully."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving team {TeamId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                Message = "An error occurred while retrieving team.",
-                Errors = new List<string> { ex.Message }
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
     //[Authorize(Roles = "Admin")]
@@ -181,6 +166,64 @@ public class TeamController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+
+    [HttpPost("create-collector")]
+    public async Task<IActionResult> CreateCollector([FromBody] CreateCollectorRequestDto request)
+    {
+        try
+        {
+            var result = await _teamService.CreateCollectorAsync(request);
+            return StatusCode(201, ApiResponse<object>.SuccessResponse(result, "Tạo Collector thành công"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating collector");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPost("{teamId}/set-leader/{collectorId}")]
+    public async Task<IActionResult> SetLeader(int teamId, int collectorId)
+    {
+        try
+        {
+            await _teamService.SetLeaderAsync(teamId, collectorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Đã thiết lập trưởng nhóm thành công"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting leader");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPost("{teamId}/remove-leader/{collectorId}")]
+    public async Task<IActionResult> RemoveLeader(int teamId, int collectorId)
+    {
+        try
+        {
+            await _teamService.RemoveLeaderAsync(teamId, collectorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Đã gỡ chức vụ trưởng nhóm thành công"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing leader");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
     [HttpPost("add-collector")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -232,7 +275,41 @@ public class TeamController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing collector {CollectorId} from team {TeamId}", request.CollectorId, request.TeamId);
-            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.InnerException?.Message ?? ex.Message));
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpGet("collectors")]
+    public async Task<IActionResult> GetAllCollectors()
+    {
+        try
+        {
+            var collectors = await _teamService.GetAllCollectorsAsync();
+            return Ok(ApiResponse<object>.SuccessResponse(collectors, "Tất cả Collector đã được lấy thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all collectors");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPost("{teamId}/assign-area/{areaId}")]
+    public async Task<IActionResult> AssignTeamToArea(int teamId, int areaId)
+    {
+        try
+        {
+            await _teamService.AssignTeamToAreaAsync(teamId, areaId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Đã gán team vào khu vực thành công"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning team {TeamId} to area {AreaId}", teamId, areaId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
 }
