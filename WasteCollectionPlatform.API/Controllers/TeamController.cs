@@ -124,7 +124,7 @@ public class TeamController : ControllerBase
             var result = await _teamService.CreateTeamAsync(request);
 
             return StatusCode(201,
-                ApiResponse<object>.SuccessResponse(result, "T?o Team th‡nh cÙng"));
+                ApiResponse<object>.SuccessResponse(result, "T·∫°o Team th√†nh c√¥ng"));
         }
         catch (BusinessRuleException ex)
         {
@@ -189,7 +189,7 @@ public class TeamController : ControllerBase
         try
         {
             await _teamService.AddCollectorToTeamAsync(request);
-            return Ok(ApiResponse<object>.SuccessResponse(null, "ThÍm Collector v‡o Team th‡nh cÙng"));
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Th√™m Collector v√†o Team th√†nh c√¥ng"));
         }
         catch (Exception ex)
         {

@@ -19,8 +19,6 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<Collector> Collectors { get; set; }
 
-    public virtual DbSet<Enterprise> Enterprises { get; set; }
-
     public virtual DbSet<District> Districts { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
@@ -40,8 +38,10 @@ public partial class WasteManagementContext : DbContext
     public virtual DbSet<WasteReport> WasteReports { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+    public virtual DbSet<PendingRegistration> PendingRegistrations { get; set; }
 
-    public virtual DbSet<Admin> Admins { get; set; }
+
+    public virtual DbSet<SystemConfiguration> SystemConfigurations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,7 +78,9 @@ public partial class WasteManagementContext : DbContext
 
             entity.HasIndex(e => e.UserId, "citizen_userid_key").IsUnique();
 
-            entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
+            entity.Property(e => e.CitizenId)
+                .HasColumnName("CitizenId")
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.TotalPoints)
                 .HasDefaultValue(0)
                 .HasColumnName("TotalPoints");
@@ -249,7 +251,9 @@ public partial class WasteManagementContext : DbContext
 
             entity.HasIndex(e => e.Email, "User_email_key").IsUnique();
 
-            entity.Property(e => e.UserId).HasColumnName("UserId");
+            entity.Property(e => e.UserId)
+                .HasColumnName("UserId")
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.Email)
                 .HasMaxLength(150)
                 .HasColumnName("Email");
@@ -267,19 +271,20 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
                 .HasColumnName("Status");
-            entity.Property(e => e.Emailverified)
-                .HasDefaultValue(false)
+            entity.Property(e => e.EmailVerified)
                 .HasColumnName("EmailVerified");
-            entity.Property(e => e.Verificationtoken)
+            entity.Property(e => e.VerificationToken)
                 .HasMaxLength(500)
                 .HasColumnName("VerificationToken");
-            entity.Property(e => e.Verificationtokenexpiry)
+            entity.Property(e => e.VerificationTokenExpiry)
                 .HasColumnName("VerificationTokenExpiry");
-            entity.Property(e => e.Resetpasswordtoken)
+            entity.Property(e => e.ResetPasswordToken)
                 .HasMaxLength(500)
                 .HasColumnName("ResetPasswordToken");
-            entity.Property(e => e.Resettokenexpiry)
+            entity.Property(e => e.ResetTokenExpiry)
                 .HasColumnName("ResetTokenExpiry");
+            entity.Property(e => e.TokenVersion)
+                .HasColumnName("TokenVersion");
         });
 
         modelBuilder.Entity<Voucher>(entity =>
@@ -297,6 +302,11 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.VoucherName)
                 .HasMaxLength(150)
                 .HasColumnName("VoucherName");
+            entity.Property(e => e.Description).HasColumnName("Description");
+            entity.Property(e => e.VoucherCode).HasMaxLength(50).HasColumnName("VoucherCode");
+            entity.Property(e => e.Image).HasColumnName("Image");
+            entity.Property(e => e.Category).HasMaxLength(50).HasColumnName("Category");
+            entity.Property(e => e.ExpiryDays).HasColumnName("ExpiryDays");
         });
 
         modelBuilder.Entity<WasteReport>(entity =>
@@ -345,52 +355,15 @@ public partial class WasteManagementContext : DbContext
                 .HasConstraintName("fk_report_citizen");
         });
 
-        modelBuilder.Entity<Admin>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("admin_pkey");
 
-            entity.ToTable("Admins");
-
-            entity.HasIndex(e => e.UserId, "admin_userid_key").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("AdminId");
-            entity.Property(e => e.UserId).HasColumnName("UserId");
-            entity.Property(e => e.Department)
-                .HasMaxLength(100)
-                .HasColumnName("Department");
-            entity.Property(e => e.Level)
-                .HasDefaultValue(1)
-                .HasColumnName("Level");
-            entity.Property(e => e.IsSuperAdmin)
-                .HasDefaultValue(false)
-                .HasColumnName("IsSuperAdmin");
-            entity.Property(e => e.Status)
-                .HasDefaultValue(true)
-                .HasColumnName("Status");
-            entity.Property(e => e.CreatedBy).HasColumnName("CreatedBy");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp with time zone")
-                .HasColumnName("CreatedAt");
-            entity.Property(e => e.LastLoginAt)
-                .HasColumnType("timestamp with time zone")
-                .HasColumnName("LastLoginAt");
-
-            entity.HasOne(d => d.User).WithOne()
-                .HasForeignKey<Admin>(d => d.UserId)
-                .HasConstraintName("fk_admin_user");
-
-            entity.HasOne(d => d.CreatorUser).WithMany()
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_admin_createdby");
-        });
+        modelBuilder.Entity<SystemConfiguration>().HasData(
+            new SystemConfiguration { Key = "Points_CompletedReport", Value = "10", Description = "Number of points earned by citizen when a waste report is successfully completed." },
+            new SystemConfiguration { Key = "Points_CancelledReport", Value = "-5", Description = "Number of points deducted from citizen when a waste report is invalid/cancelled." }
+        );
 
         // RefreshToken configuration
         modelBuilder.ApplyConfiguration(new Configurations.RefreshTokenConfiguration());
 
-        // Enterprise configuration
-        modelBuilder.ApplyConfiguration(new Configurations.EnterpriseConfiguration());
 
         OnModelCreatingPartial(modelBuilder);
     }

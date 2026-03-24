@@ -118,6 +118,21 @@ public class WasteReportController : ControllerBase
 		}
 	}
 
+	[HttpPost("confirm/{id}")]
+	public async Task<IActionResult> Confirm(int id, [FromQuery] int collectorId)
+	{
+		try
+		{
+			await _wasteReportService.ConfirmReportAsync(id, collectorId);
+			return Ok("Report confirmed and is now being processed");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error confirming waste report {ReportId}", id);
+			return BadRequest(ex.Message);
+		}
+	}
+
 	[HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(int id)
 	{
@@ -189,10 +204,39 @@ public class WasteReportController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateWasteReportDto dto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _wasteReportService.UpdateAsync(id, dto);
+            return Ok(result);
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating waste report {ReportId}", id);
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     private bool IsAdmin()
 	{
-		var adminIdClaim = User.FindFirst("adminId");
-		return adminIdClaim != null;
+		
+		return User.IsInRole("Admin");
 	}
 }
 

@@ -26,7 +26,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "point_transaction_type", new[] { "Earn", "Redeem" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "team_type", new[] { "Main", "Support" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", "user_role", new[] { "citizen", "collector", "enterprise", "admin" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", "user_role", new[] { "citizen", "collector", "enterprise", "admin", "manager" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Admin", b =>
@@ -34,7 +34,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("Id");
+                        .HasColumnName("AdminId");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
@@ -154,10 +154,10 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CollectorId"));
 
-                    b.Property<int>("Role")
+                    b.Property<CollectorRole>("Role")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
+                        .HasColumnType("collector_role")
+                        .HasDefaultValue(CollectorRole.Member)
                         .HasColumnName("Role");
 
                     b.Property<bool?>("Status")
@@ -206,55 +206,6 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.ToTable("Districts", (string)null);
                 });
 
-            modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Enterprise", b =>
-                {
-                    b.Property<int>("EnterpriseId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("enterpriseid");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("EnterpriseId"));
-
-                    b.Property<int?>("Currentload")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("currentload");
-
-                    b.Property<int?>("Dailycapacity")
-                        .HasColumnType("integer")
-                        .HasColumnName("dailycapacity");
-
-                    b.Property<int?>("DistrictId")
-                        .HasColumnType("integer")
-                        .HasColumnName("districtid");
-
-                    b.Property<bool?>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("status");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("userid");
-
-                    b.Property<string>("Wastetypes")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("wastetypes");
-
-                    b.HasKey("EnterpriseId")
-                        .HasName("enterprise_pkey");
-
-                    b.HasIndex("DistrictId");
-
-                    b.HasIndex(new[] { "UserId" }, "enterprise_userid_key")
-                        .IsUnique();
-
-                    b.ToTable("enterprise", (string)null);
-                });
-
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Notification", b =>
                 {
                     b.Property<int>("NotificationId")
@@ -297,6 +248,42 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications", (string)null);
+                });
+
+            modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.PendingRegistration", b =>
+                {
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Expiry")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("VerificationCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Email");
+
+                    b.ToTable("PendingRegistrations");
                 });
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.PointHistory", b =>
@@ -344,44 +331,44 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.RefreshToken", b =>
                 {
-                    b.Property<int>("RefreshtokenId")
+                    b.Property<int>("RefreshTokenId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("refreshtokenid");
+                        .HasColumnName("RefreshTokenId");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("RefreshtokenId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("RefreshTokenId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("createdat")
+                        .HasColumnName("CreatedAt")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<DateTime>("Expiresat")
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expiresat");
+                        .HasColumnName("ExpiresAt");
 
-                    b.Property<bool?>("Isrevoked")
+                    b.Property<bool?>("IsRevoked")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
-                        .HasColumnName("isrevoked");
+                        .HasColumnName("IsRevoked");
 
-                    b.Property<DateTime?>("Revokedat")
+                    b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("revokedat");
+                        .HasColumnName("RevokedAt");
 
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("token");
+                        .HasColumnName("Token");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer")
-                        .HasColumnName("userid");
+                        .HasColumnName("UserId");
 
-                    b.HasKey("RefreshtokenId")
+                    b.HasKey("RefreshTokenId")
                         .HasName("refreshtoken_pkey");
 
                     b.HasIndex("Token")
@@ -391,7 +378,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("idx_refreshtoken_userid");
 
-                    b.ToTable("refreshtoken", (string)null);
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.ReportAssignment", b =>
@@ -447,6 +434,41 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.ToTable("ReportImages", (string)null);
                 });
 
+            modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.SystemConfiguration", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Key");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("Description");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("Value");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("SystemConfigurations");
+
+                    b.HasData(
+                        new
+                        {
+                            Key = "Points_CompletedReport",
+                            Description = "Number of points earned by citizen when a waste report is successfully completed.",
+                            Value = "10"
+                        },
+                        new
+                        {
+                            Key = "Points_CancelledReport",
+                            Description = "Number of points deducted from citizen when a waste report is invalid/cancelled.",
+                            Value = "-5"
+                        });
+                });
+
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Team", b =>
                 {
                     b.Property<int>("TeamId")
@@ -495,10 +517,8 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                         .HasColumnType("character varying(150)")
                         .HasColumnName("Email");
 
-                    b.Property<bool>("Emailverified")
-                        .ValueGeneratedOnAdd()
+                    b.Property<bool>("EmailVerified")
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("EmailVerified");
 
                     b.Property<string>("FullName")
@@ -518,12 +538,12 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("Phone");
 
-                    b.Property<string>("Resetpasswordtoken")
+                    b.Property<string>("ResetPasswordToken")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("ResetPasswordToken");
 
-                    b.Property<DateTime?>("Resettokenexpiry")
+                    b.Property<DateTime?>("ResetTokenExpiry")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ResetTokenExpiry");
 
@@ -539,14 +559,14 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
 
                     b.Property<int>("TokenVersion")
                         .HasColumnType("integer")
-                        .HasColumnName("tokenversion");
+                        .HasColumnName("TokenVersion");
 
-                    b.Property<string>("Verificationtoken")
+                    b.Property<string>("VerificationToken")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("VerificationToken");
 
-                    b.Property<DateTime?>("Verificationtokenexpiry")
+                    b.Property<DateTime?>("VerificationTokenExpiry")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("VerificationTokenExpiry");
 
@@ -568,6 +588,23 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VoucherId"));
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("Category");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("Description");
+
+                    b.Property<int?>("ExpiryDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("ExpiryDays");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("text")
+                        .HasColumnName("Image");
+
                     b.Property<int>("PointsRequired")
                         .HasColumnType("integer")
                         .HasColumnName("PointsRequired");
@@ -581,6 +618,11 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                     b.Property<int>("StockQuantity")
                         .HasColumnType("integer")
                         .HasColumnName("StockQuantity");
+
+                    b.Property<string>("VoucherCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("VoucherCode");
 
                     b.Property<string>("VoucherName")
                         .IsRequired()
@@ -645,8 +687,8 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ExpireTime");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
+                    b.Property<ReportStatus>("Status")
+                        .HasColumnType("report_status")
                         .HasColumnName("Status");
 
                     b.Property<int?>("TeamId")
@@ -729,26 +771,6 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                         .HasConstraintName("fk_collector_user");
 
                     b.Navigation("Team");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.Enterprise", b =>
-                {
-                    b.HasOne("WasteCollectionPlatform.DataAccess.Entities.District", "District")
-                        .WithMany()
-                        .HasForeignKey("DistrictId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_enterprise_district");
-
-                    b.HasOne("WasteCollectionPlatform.DataAccess.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("WasteCollectionPlatform.DataAccess.Entities.Enterprise", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_enterprise_user");
-
-                    b.Navigation("District");
 
                     b.Navigation("User");
                 });

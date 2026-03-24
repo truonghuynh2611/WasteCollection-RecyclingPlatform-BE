@@ -24,9 +24,10 @@ public interface IAuthService
     Task<AuthResponseDto> RefreshTokenAsync(string token);
     
     /// <summary>
-    /// Verify user email with verification token
+    /// Verify user email with verification token and return auth data
     /// </summary>
-    Task<bool> VerifyEmailAsync(string token);
+    Task<AuthResponseDto> VerifyEmailAsync(VerifyEmailRequestDto request);
+    Task<bool> ResendVerificationCodeAsync(string email);
     
     /// <summary>
     /// Send password reset email

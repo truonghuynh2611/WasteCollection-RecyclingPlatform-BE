@@ -69,6 +69,12 @@ public class ExceptionHandlingMiddleware
                 );
 
                 _logger.LogError(exception, "Unhandled exception occurred");
+                
+                // Debug: Write exception to file
+                try {
+                    System.IO.File.WriteAllText(@"d:\SWP391_SP26\crash.txt", exception.ToString());
+                } catch {}
+                
                 break;
         }
         

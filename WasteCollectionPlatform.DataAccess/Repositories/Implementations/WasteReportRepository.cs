@@ -18,6 +18,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
     {
         return await _dbSet
             .Where(r => r.CitizenId == citizenId)
+            .Include(r => r.PointHistories)
             .Include(r => r.ReportImages)
             .Include(r => r.Area)
             .OrderByDescending(r => r.CreatedAt)
@@ -41,6 +42,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Where(r => r.ReportAssignments.Any(ra => ra.TeamId == collector.TeamId))
             .Include(r => r.Citizen)
             .Include(r => r.ReportImages)
+            .Include(r => r.PointHistories)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
     }
@@ -50,6 +52,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         return await _context.WasteReports
             .Include(w => w.Citizen)
             .Include(w => w.Area)
+            .Include(w => w.PointHistories)
             .ToListAsync();
     }
 
@@ -58,6 +61,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         return await _context.WasteReports
             .Include(w => w.Citizen)
             .Include(w => w.Area)
+            .Include(w => w.PointHistories)
             .FirstOrDefaultAsync(w => w.ReportId == id);
     }
 
@@ -76,7 +80,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         if (report.Status != ReportStatus.Pending)
             throw new BusinessRuleException("Only reports in Pending status can be cancelled");
 
-        report.Status = ReportStatus.Cancelled;
+        report.Status = ReportStatus.Failed;
 
         await UpdateAsync(report);
         await SaveChangesAsync();

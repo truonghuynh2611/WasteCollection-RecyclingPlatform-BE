@@ -24,8 +24,7 @@ public class RegisterRequestDto
     public string Password { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "Phone number is required.")]
-    [Phone(ErrorMessage = "Invalid phone number format.")]
-    [StringLength(20, ErrorMessage = "Phone number must not exceed 20 characters.")]
+    [RegularExpression(@"^0\d{9}$", ErrorMessage = "Phone number must start with 0 and contain exactly 10 digits.")]
     public string Phone { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "Role is required.")]

@@ -16,14 +16,15 @@ public class UnitOfWork : IUnitOfWork
     private IUserRepository? _users;
     private ICitizenRepository? _citizens;
     private ICollectorRepository? _collectors;
-    private IEnterpriseRepository? _enterprises;
     private IDistrictRepository? _districts;
     private ITeamRepository? _teams;
     private IWasteReportRepository? _wasteReports;
     private IVoucherRepository? _vouchers;
     private IPointHistoryRepository? _pointHistories;
     private IRefreshTokenRepository? _refreshTokens;
+    private IPendingRegistrationRepository? _pendingRegistrations;
     private IAreaRepository? _areas;
+    private ISystemConfigurationRepository? _systemConfigurations;
 
     public UnitOfWork(WasteManagementContext context)
     {
@@ -39,8 +40,6 @@ public class UnitOfWork : IUnitOfWork
     public ICollectorRepository Collectors => 
         _collectors ??= new CollectorRepository(_context);
     
-    public IEnterpriseRepository Enterprises => 
-        _enterprises ??= new EnterpriseRepository(_context);
     
     public IDistrictRepository Districts => 
         _districts ??= new DistrictRepository(_context);
@@ -60,8 +59,14 @@ public class UnitOfWork : IUnitOfWork
     public IRefreshTokenRepository RefreshTokens => 
         _refreshTokens ??= new RefreshTokenRepository(_context);
 
+    public IPendingRegistrationRepository PendingRegistrations => 
+        _pendingRegistrations ??= new PendingRegistrationRepository(_context);
+    
     public IAreaRepository Areas =>
-    _areas ??= new AreaRepository(_context);
+        _areas ??= new AreaRepository(_context);
+
+    public ISystemConfigurationRepository SystemConfigurations =>
+        _systemConfigurations ??= new SystemConfigurationRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

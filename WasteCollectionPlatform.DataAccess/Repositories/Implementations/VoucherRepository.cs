@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Entities;
@@ -25,5 +28,10 @@ public class VoucherRepository : GenericRepository<Voucher>, IVoucherRepository
             .Where(ph => ph.Voucher != null)
             .Select(ph => ph.Voucher!)
             .ToList();
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
 }
