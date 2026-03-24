@@ -37,4 +37,9 @@ public interface IAuthService
     /// Reset user password with token
     /// </summary>
     Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request);
+    
+    /// <summary>
+    /// Resend verification email to user
+    /// </summary>
+    Task<bool> ResendVerificationEmailAsync(string email);
 }

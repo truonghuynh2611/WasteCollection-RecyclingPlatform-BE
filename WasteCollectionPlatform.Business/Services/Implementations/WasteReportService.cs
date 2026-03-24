@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
@@ -63,9 +63,23 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("Area does not exist");
 		}
 
-		if (!await IsValidImageUrlAsync(dto.ImageUrl))
+		// Handle image: either from uploaded file or from URL
+		string? imageUrl = null;
+		if (dto.ImageFile != null && dto.ImageFile.Length > 0)
 		{
-			throw new Exception("Invalid image URL. Must be a real image link.");
+			var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "reports");
+			Directory.CreateDirectory(uploadsDir);
+			var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.ImageFile.FileName)}";
+			var filePath = Path.Combine(uploadsDir, fileName);
+			using (var stream = new FileStream(filePath, FileMode.Create))
+			{
+				await dto.ImageFile.CopyToAsync(stream);
+			}
+			imageUrl = $"/uploads/reports/{fileName}";
+		}
+		else if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
+		{
+			imageUrl = dto.ImageUrl;
 		}
 
 		var wasteReport = new WasteReport
@@ -81,15 +95,18 @@ public class WasteReportService : IWasteReportService
 			ExpireTime = DateTime.UtcNow.AddHours(24),
 			TeamId = null
 		};
-
-		var image = new ReportImage
-		{
-			Imageurl = dto.ImageUrl!,
-			Report = wasteReport
-		};
-
 		await _wasteReportRepo.AddAsync(wasteReport);
-		await _reportImageRepo.AddAsync(image);
+
+		if (!string.IsNullOrEmpty(imageUrl))
+		{
+			var image = new ReportImage
+			{
+				Imageurl = imageUrl,
+				Report = wasteReport
+			};
+			await _reportImageRepo.AddAsync(image);
+		}
+
 		await _wasteReportRepo.SaveChangesAsync();
 
 		return wasteReport;
@@ -190,13 +207,13 @@ public class WasteReportService : IWasteReportService
         if (report.Status != ReportStatus.Pending)
             throw new BusinessRuleException("Only reports in Pending status can be cancelled");
 
-        // Ch? set Status = Cancelled, kh�ng th�m field CanceledReason
+        // Ch? set Status = Cancelled, khÃ´ng thÃªm field CanceledReason
         report.Status = ReportStatus.Cancelled;
 
         await _wasteReportRepo.UpdateAsync(report);
         await _wasteReportRepo.SaveChangesAsync();
 
-        // N?u mu?n, log l� do cancel
+        // N?u mu?n, log lÃ½ do cancel
         if (!string.IsNullOrEmpty(request.Reason))
         {
             _logger.LogInformation("Admin cancelled report {ReportId}. Reason: {Reason}", request.ReportId, request.Reason);
@@ -295,7 +312,12 @@ public class WasteReportService : IWasteReportService
 		await _wasteReportRepo.SaveChangesAsync();
 	}
 
-	public async Task<bool> DeleteAsync(int id)
+	public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId)
+	{
+		return await _wasteReportRepo.GetByCitizenIdAsync(citizenId);
+	}
+
+public async Task<bool> DeleteAsync(int id)
 	{
 		var report = await _wasteReportRepo.GetByIdAsync(id);
 		if (report == null)
@@ -308,3 +330,4 @@ public class WasteReportService : IWasteReportService
 		return true;
 	}
 }
+

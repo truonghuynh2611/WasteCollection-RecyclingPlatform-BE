@@ -484,4 +484,40 @@ public class AuthService : IAuthService
         
         return true;
     }
+    public async Task<bool> ResendVerificationEmailAsync(string email)
+    {
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        
+        if (user == null)
+        {
+            throw new NotFoundException("User not found.");
+        }
+        
+        if (user.Emailverified)
+        {
+            throw new BusinessRuleException("Email is already verified.");
+        }
+        
+        // Generate new verification token
+        user.Verificationtoken = Guid.NewGuid().ToString();
+        user.Verificationtokenexpiry = DateTime.UtcNow.AddHours(24);
+        
+        await _unitOfWork.SaveChangesAsync();
+        
+        // Send email (async)
+        var verificationLink = $"http://localhost:5173/verify-email?token={user.Verificationtoken}";
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, "Verify your email", $"Please verify your email by clicking <a href='{verificationLink}'>here</a>.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend verification email to {Email}", user.Email);
+            }
+        });
+        
+        return true;
+    }
 }
