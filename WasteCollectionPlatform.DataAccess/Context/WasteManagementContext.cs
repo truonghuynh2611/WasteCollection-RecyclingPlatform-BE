@@ -339,6 +339,7 @@ public partial class WasteManagementContext : DbContext
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("ExpireTime");
             entity.Property(e => e.Status)
+                .HasConversion<int>()
                 .HasColumnName("Status");
             entity.Property(e => e.TeamId)
                 .HasColumnName("TeamId");

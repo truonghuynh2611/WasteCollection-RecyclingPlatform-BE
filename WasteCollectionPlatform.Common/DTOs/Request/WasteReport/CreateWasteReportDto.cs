@@ -12,5 +12,4 @@ public class CreateWasteReportDto
     public string WasteType { get; set; } = string.Empty;
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
-    public IFormFile? ImageFile { get; set; }
 }

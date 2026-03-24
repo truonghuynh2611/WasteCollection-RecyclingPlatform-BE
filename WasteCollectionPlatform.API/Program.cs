@@ -20,7 +20,6 @@ using WasteCollectionPlatform.Common.Helpers;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Repositories.Implementations;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
-using WasteCollectionPlatform.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 

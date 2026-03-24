@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
@@ -310,8 +310,8 @@ public class WasteReportService : IWasteReportService
         if (report.Status != ReportStatus.Pending)
             throw new BusinessRuleException("Only reports in Pending status can be cancelled");
 
-        // Ch? set Status = Cancelled, khÃ´ng thÃªm field CanceledReason
-        report.Status = ReportStatus.Cancelled;
+        // Ch? set Status = Failed, khÃ´ng thÃªm field CanceledReason
+        report.Status = ReportStatus.Failed;
 
         await _wasteReportRepo.UpdateAsync(report);
         await _wasteReportRepo.SaveChangesAsync();
@@ -352,12 +352,12 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("Collector not found");
 		}
 
-		if (collectorId > 0 && collector.TeamId != report.TeamId)
+		if (collectorId > 0 && collector!.TeamId != report.TeamId)
 		{
 			throw new Exception("You are not in the assigned team");
 		}
 
-		if (collectorId > 0 && collector.Role != CollectorRole.Leader)
+		if (collectorId > 0 && collector!.Role != CollectorRole.Leader)
 		{
 			throw new Exception("Only team leader can submit completion report");
 		}
@@ -434,7 +434,7 @@ public class WasteReportService : IWasteReportService
             // Record PointHistory
             var pointLog = new PointHistory
             {
-                CitizenId = citizen.CitizenId,
+                CitizenId = citizen!.CitizenId,
                 ReportId = report.ReportId,
                 PointAmount = pointsForCancelled,
                 CreatedAt = DateTime.Now
@@ -504,11 +504,6 @@ public class WasteReportService : IWasteReportService
 		{
 			_logger.LogWarning(ex, "Failed to send notification for confirmed report {ReportId}", report.ReportId);
 		}
-	}
-
-	public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId)
-	{
-		return await _wasteReportRepo.GetByCitizenIdAsync(citizenId);
 	}
 
 public async Task<bool> DeleteAsync(int id)
