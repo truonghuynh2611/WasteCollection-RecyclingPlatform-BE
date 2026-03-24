@@ -5,19 +5,19 @@ namespace WasteCollectionPlatform.DataAccess.Entities;
 
 public partial class Notification
 {
-    public int Notificationid { get; set; }
+    public int NotificationId { get; set; }
 
-    public int? Reportid { get; set; }
+    public int? ReportId { get; set; }
 
-    public int Userid { get; set; }
+    public int UserId { get; set; }
 
     public string Message { get; set; } = null!;
 
-    public DateTime? Createdat { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     public bool? Isread { get; set; }
 
-    public virtual Wastereport? Report { get; set; }
+    public virtual WasteReport? Report { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

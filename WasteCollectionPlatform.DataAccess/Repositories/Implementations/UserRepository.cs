@@ -32,6 +32,6 @@ public class UserRepository : GenericRepository<User>, IUserRepository
             .Include(u => u.Citizen)
             .Include(u => u.Collector)
                 .ThenInclude(c => c != null ? c.Team : null)
-            .FirstOrDefaultAsync(u => u.Userid == userId);
+            .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 }

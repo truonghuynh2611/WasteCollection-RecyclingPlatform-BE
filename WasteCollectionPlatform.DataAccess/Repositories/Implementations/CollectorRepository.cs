@@ -17,7 +17,7 @@ public class CollectorRepository : GenericRepository<Collector>, ICollectorRepos
     public async Task<Collector?> GetByUserIdAsync(int userId)
     {
         return await _dbSet
-            .FirstOrDefaultAsync(c => c.Userid == userId);
+            .FirstOrDefaultAsync(c => c.UserId == userId);
     }
     
     public async Task<Collector?> GetByIdWithDetailsAsync(int collectorId)
@@ -25,6 +25,6 @@ public class CollectorRepository : GenericRepository<Collector>, ICollectorRepos
         return await _dbSet
             .Include(c => c.User)
             .Include(c => c.Team)
-            .FirstOrDefaultAsync(c => c.Collectorid == collectorId);
+            .FirstOrDefaultAsync(c => c.CollectorId == collectorId);
     }
 }

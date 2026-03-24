@@ -14,20 +14,20 @@ public class Enterprise
     /// </summary>
     [Key]
     [Column("enterpriseid")]
-    public int Enterpriseid { get; set; }
+    public int EnterpriseId { get; set; }
 
     /// <summary>
     /// User ID (Foreign Key to User table)
     /// </summary>
     [Required]
     [Column("userid")]
-    public int Userid { get; set; }
+    public int UserId { get; set; }
 
     /// <summary>
     /// District ID where enterprise operates
     /// </summary>
     [Column("districtid")]
-    public int? Districtid { get; set; }
+    public int? DistrictId { get; set; }
 
     /// <summary>
     /// Types of waste the enterprise accepts (comma-separated)
@@ -57,12 +57,12 @@ public class Enterprise
     /// <summary>
     /// Navigation property to User
     /// </summary>
-    [ForeignKey(nameof(Userid))]
+    [ForeignKey(nameof(UserId))]
     public virtual User User { get; set; } = null!;
 
     /// <summary>
     /// Navigation property to District
     /// </summary>
-    [ForeignKey(nameof(Districtid))]
+    [ForeignKey(nameof(DistrictId))]
     public virtual District? District { get; set; }
 }

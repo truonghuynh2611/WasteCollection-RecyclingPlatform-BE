@@ -13,14 +13,14 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
     {
         builder.ToTable("refreshtoken");
 
-        builder.HasKey(e => e.Refreshtokenid)
+        builder.HasKey(e => e.RefreshtokenId)
             .HasName("refreshtoken_pkey");
 
-        builder.Property(e => e.Refreshtokenid)
+        builder.Property(e => e.RefreshtokenId)
             .HasColumnName("refreshtokenid")
             .UseIdentityAlwaysColumn();
 
-        builder.Property(e => e.Userid)
+        builder.Property(e => e.UserId)
             .IsRequired()
             .HasColumnName("userid");
 
@@ -33,7 +33,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .IsRequired()
             .HasColumnName("expiresat");
 
-        builder.Property(e => e.Createdat)
+        builder.Property(e => e.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .HasColumnName("createdat");
@@ -48,7 +48,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         // Foreign key
         builder.HasOne(d => d.User)
             .WithMany()
-            .HasForeignKey(d => d.Userid)
+            .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("fk_refreshtoken_user");
 
@@ -57,7 +57,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .IsUnique()
             .HasDatabaseName("idx_refreshtoken_token");
 
-        builder.HasIndex(e => e.Userid)
+        builder.HasIndex(e => e.UserId)
             .HasDatabaseName("idx_refreshtoken_userid");
     }
 }

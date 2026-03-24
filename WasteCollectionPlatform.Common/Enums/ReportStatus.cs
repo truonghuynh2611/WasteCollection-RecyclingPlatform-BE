@@ -13,30 +13,20 @@ public enum ReportStatus
     /// <summary>
     /// Report accepted by enterprise
     /// </summary>
-    Accepted = 1,
+    Assigned = 1,
     
     /// <summary>
     /// Report assigned to a collector
     /// </summary>
-    Assigned = 2,
+    Processing = 2,
     
     /// <summary>
     /// Collector is on the way to collect
     /// </summary>
-    OnTheWay = 3,
+    Completed = 3,
     
     /// <summary>
     /// Waste successfully collected
     /// </summary>
-    Collected = 4,
-    
-    /// <summary>
-    /// Collection failed or cancelled
-    /// </summary>
-    Failed = 5,
-    
-    /// <summary>
-    /// Report cancelled by citizen
-    /// </summary>
-    Cancelled = 6
+    Cancelled = 4
 }
