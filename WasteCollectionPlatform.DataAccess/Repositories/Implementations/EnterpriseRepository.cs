@@ -19,6 +19,6 @@ public class EnterpriseRepository : GenericRepository<Enterprise>, IEnterpriseRe
         return await _dbSet
             .Include(e => e.User)
             .Include(e => e.District)
-            .FirstOrDefaultAsync(e => e.Userid == userId);
+            .FirstOrDefaultAsync(e => e.UserId == userId);
     }
 }

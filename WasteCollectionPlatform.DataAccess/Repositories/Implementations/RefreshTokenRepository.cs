@@ -25,7 +25,7 @@ public class RefreshTokenRepository : GenericRepository<RefreshToken>, IRefreshT
     {
         var now = DateTime.UtcNow;
         return await _dbSet
-            .Where(rt => rt.Userid == userId 
+            .Where(rt => rt.UserId == userId 
                 && rt.Isrevoked != true 
                 && rt.Expiresat > now)
             .ToListAsync();
@@ -34,7 +34,7 @@ public class RefreshTokenRepository : GenericRepository<RefreshToken>, IRefreshT
     public async Task RevokeAllUserTokensAsync(int userId)
     {
         var tokens = await _dbSet
-            .Where(rt => rt.Userid == userId && rt.Isrevoked != true)
+            .Where(rt => rt.UserId == userId && rt.Isrevoked != true)
             .ToListAsync();
 
         foreach (var token in tokens)

@@ -36,8 +36,8 @@ public class DistrictController : ControllerBase
             
             var districtDtos = districts.Select(d => new
             {
-                districtId = d.Districtid,
-                districtName = d.Districtname,
+                districtId = d.DistrictId,
+                districtName = d.DistrictName,
                 areasCount = d.Areas?.Count ?? 0
             }).ToList();
 
@@ -85,11 +85,11 @@ public class DistrictController : ControllerBase
 
             var districtDto = new
             {
-                districtId = district.Districtid,
-                districtName = district.Districtname,
+                districtId = district.DistrictId,
+                districtName = district.DistrictName,
                 areas = district.Areas?.Select(a => new
                 {
-                    areaId = a.Areaid,
+                    areaId = a.AreaId,
                     areaName = a.Name
                 }).ToList()
             };

@@ -26,8 +26,12 @@ public class JwtHelper
     /// <param name="fullName">User full name</param>
     /// <param name="role">User role</param>
     /// <param name="status">User status</param>
+    /// <param name="adminId">Admin ID (optional)</param>
+    /// <param name="isSuperAdmin">Is super admin flag (optional)</param>
+    /// <param name="tokenVersion">Token version for invalidation (optional)</param>
     /// <returns>JWT token string</returns>
-    public string GenerateToken(int userId, string email, string fullName, string role, string status)
+    public string GenerateToken(int userId, string email, string fullName, string role, string status, 
+        int? adminId = null, bool isSuperAdmin = false, int tokenVersion = 0)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
@@ -38,7 +42,7 @@ public class JwtHelper
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
@@ -46,8 +50,16 @@ public class JwtHelper
             new Claim(ClaimTypes.Role, role),
             new Claim("UserId", userId.ToString()),
             new Claim("Status", status),
+            new Claim("tokenVersion", tokenVersion.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        // Add admin-specific claims if admin
+        if (adminId.HasValue)
+        {
+            claims.Add(new Claim("adminId", adminId.Value.ToString()));
+            claims.Add(new Claim("isSuperAdmin", isSuperAdmin.ToString().ToLower()));
+        }
         
         var token = new JwtSecurityToken(
             issuer: issuer,

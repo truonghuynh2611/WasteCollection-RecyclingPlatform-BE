@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using Npgsql.NameTranslation;
 using WasteCollectionPlatform.API.Middleware;
 using WasteCollectionPlatform.Business.Services.Implementations;
 using WasteCollectionPlatform.Business.Services.Interfaces;
@@ -20,7 +22,11 @@ using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // Configure Swagger with JWT support
@@ -62,9 +68,12 @@ builder.Services.AddSwaggerGen(c =>
 // Configure Database - PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Tạo DataSource và map enum với name translator để giữ nguyên case
+// Map enum với NpgsqlNullNameTranslator - không convert case (DB có PascalCase: 'Admin', 'Citizen'...)
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString!);
-dataSourceBuilder.MapEnum<UserRole>("user_role", nameTranslator: new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
+dataSourceBuilder.MapEnum<UserRole>(
+    "user_role",
+    new NpgsqlNullNameTranslator()
+);
 
 var dataSource = dataSourceBuilder.Build();
 
@@ -121,16 +130,24 @@ builder.Services.AddScoped<ICitizenRepository, CitizenRepository>();
 builder.Services.AddScoped<ICollectorRepository, CollectorRepository>();
 builder.Services.AddScoped<IEnterpriseRepository, EnterpriseRepository>();
 builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
+builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IWasteReportRepository, WasteReportRepository>();
+builder.Services.AddScoped<IReportImageRepository, ReportImageRepository>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IPointHistoryRepository, PointHistoryRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IWasteReportService, WasteReportService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IAreaService, AreaService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 // Add other services here as they are implemented
 
 // Register FluentValidation
@@ -139,25 +156,43 @@ builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationValidator>(
 
 var app = builder.Build();
 
-//Apply RefreshToken migration manually (one-time setup)
+// Apply pending migrations automatically
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
     try
     {
+        await context.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
+    }
+}
+
+// ⚠️ ALL MIGRATIONS AND SEED CODE COMMENTED OUT - Using PascalCase tables now
+/*
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
+    
+    // RefreshToken table migration
+    try
+    {
         await context.Database.ExecuteSqlRawAsync(@"
-            CREATE TABLE IF NOT EXISTS refreshtoken (
-                refreshtokenid SERIAL PRIMARY KEY,
-                userid INTEGER NOT NULL,
-                token VARCHAR(500) NOT NULL UNIQUE,
-                expiresat TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                createdat TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                isrevoked BOOLEAN DEFAULT FALSE,
-                revokedat TIMESTAMP WITHOUT TIME ZONE,
-                CONSTRAINT fk_refreshtoken_user FOREIGN KEY (userid) REFERENCES ""User""(userid) ON DELETE CASCADE
+            CREATE TABLE IF NOT EXISTS ""RefreshTokens"" (
+                ""RefreshTokenId"" SERIAL PRIMARY KEY,
+                ""UserId"" INTEGER NOT NULL,
+                ""Token"" VARCHAR(500) NOT NULL UNIQUE,
+                ""ExpiresAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                ""CreatedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ""IsRevoked"" BOOLEAN DEFAULT FALSE,
+                ""RevokedAt"" TIMESTAMP WITHOUT TIME ZONE,
+                CONSTRAINT fk_refreshtoken_user FOREIGN KEY (""UserId"") REFERENCES ""Users""(""UserId"") ON DELETE CASCADE
             );
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_refreshtoken_token ON refreshtoken(token);
-            CREATE INDEX IF NOT EXISTS idx_refreshtoken_userid ON refreshtoken(userid);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_refreshtoken_token ON ""RefreshTokens""(""Token"");
+            CREATE INDEX IF NOT EXISTS idx_refreshtoken_userid ON ""RefreshTokens""(""UserId"");
         ");
         Console.WriteLine("✅ RefreshToken table migration applied");
     }
@@ -166,19 +201,19 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"⚠️  RefreshToken table already exists or migration failed: {ex.Message}");
     }
     
-    // Apply Email Verification migration
+    // Email Verification migration
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
-            ALTER TABLE ""User"" 
-            ADD COLUMN IF NOT EXISTS emailverified BOOLEAN DEFAULT FALSE,
-            ADD COLUMN IF NOT EXISTS verificationtoken VARCHAR(500),
-            ADD COLUMN IF NOT EXISTS verificationtokenexpiry TIMESTAMP WITHOUT TIME ZONE,
-            ADD COLUMN IF NOT EXISTS resetpasswordtoken VARCHAR(500),
-            ADD COLUMN IF NOT EXISTS resettokenexpiry TIMESTAMP WITHOUT TIME ZONE;
+            ALTER TABLE ""Users"" 
+            ADD COLUMN IF NOT EXISTS ""EmailVerified"" BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS ""VerificationToken"" VARCHAR(500),
+            ADD COLUMN IF NOT EXISTS ""VerificationTokenExpiry"" TIMESTAMP WITHOUT TIME ZONE,
+            ADD COLUMN IF NOT EXISTS ""ResetPasswordToken"" VARCHAR(500),
+            ADD COLUMN IF NOT EXISTS ""ResetTokenExpiry"" TIMESTAMP WITHOUT TIME ZONE;
             
-            CREATE INDEX IF NOT EXISTS idx_users_verificationtoken ON ""User""(verificationtoken) WHERE verificationtoken IS NOT NULL;
-            CREATE INDEX IF NOT EXISTS idx_users_resetpasswordtoken ON ""User""(resetpasswordtoken) WHERE resetpasswordtoken IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS idx_users_verificationtoken ON ""Users""(""VerificationToken"") WHERE ""VerificationToken"" IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS idx_users_resetpasswordtoken ON ""Users""(""ResetPasswordToken"") WHERE ""ResetPasswordToken"" IS NOT NULL;
         ");
         Console.WriteLine("✅ Email verification and password reset fields migration applied");
     }
@@ -187,22 +222,22 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"⚠️  Email verification fields already exist or migration failed: {ex.Message}");
     }
     
-    // Apply Enterprise table migration
+    // Enterprise table migration
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
-            CREATE TABLE IF NOT EXISTS enterprise (
-                enterpriseid SERIAL PRIMARY KEY,
-                userid INTEGER NOT NULL UNIQUE,
-                districtid INTEGER,
-                wastetypes VARCHAR(255),
-                dailycapacity INTEGER,
-                currentload INTEGER DEFAULT 0,
-                status BOOLEAN DEFAULT TRUE,
-                CONSTRAINT fk_enterprise_user FOREIGN KEY (userid) REFERENCES ""User""(userid) ON DELETE CASCADE,
-                CONSTRAINT fk_enterprise_district FOREIGN KEY (districtid) REFERENCES district(districtid) ON DELETE SET NULL
+            CREATE TABLE IF NOT EXISTS ""Enterprises"" (
+                ""EnterpriseId"" SERIAL PRIMARY KEY,
+                ""UserId"" INTEGER NOT NULL UNIQUE,
+                ""DistrictId"" INTEGER,
+                ""WasteTypes"" VARCHAR(255),
+                ""DailyCapacity"" INTEGER,
+                ""CurrentLoad"" INTEGER DEFAULT 0,
+                ""Status"" BOOLEAN DEFAULT TRUE,
+                CONSTRAINT fk_enterprise_user FOREIGN KEY (""UserId"") REFERENCES ""Users""(""UserId"") ON DELETE CASCADE,
+                CONSTRAINT fk_enterprise_district FOREIGN KEY (""DistrictId"") REFERENCES ""Districts""(""DistrictId"") ON DELETE SET NULL
             );
-            CREATE UNIQUE INDEX IF NOT EXISTS enterprise_userid_key ON enterprise(userid);
+            CREATE UNIQUE INDEX IF NOT EXISTS enterprise_userid_key ON ""Enterprises""(""UserId"");
         ");
         Console.WriteLine("✅ Enterprise table migration applied");
     }
@@ -215,7 +250,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO district (districtname) 
+            INSERT INTO ""Districts"" (""DistrictName"") 
             SELECT * FROM (VALUES
                 ('Quận 1'), ('Quận 2'), ('Quận 3'), ('Quận 4'),
                 ('Quận 5'), ('Quận 6'), ('Quận 7'), ('Quận 8'),
@@ -226,7 +261,7 @@ using (var scope = app.Services.CreateScope())
                 ('Bình Chánh'), ('Nhà Bè'), ('Cần Giờ')
             ) AS v(districtname)
             WHERE NOT EXISTS (
-                SELECT 1 FROM district WHERE districtname = v.districtname
+                SELECT 1 FROM ""Districts"" WHERE ""DistrictName"" = v.districtname
             );
         ");
         Console.WriteLine("✅ District data seeded successfully");
@@ -240,9 +275,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO area (districtid, name) 
-            SELECT districtid, v.name
-            FROM district d, (VALUES
+            INSERT INTO ""Areas"" (""DistrictId"", ""Name"") 
+            SELECT d.""DistrictId"", v.name
+            FROM ""Districts"" d, (VALUES
                 ('Quận 1', 'Khu vực 1A'),
                 ('Quận 1', 'Khu vực 1B'),
                 ('Quận 2', 'Khu vực 2A'),
@@ -259,9 +294,9 @@ using (var scope = app.Services.CreateScope())
                 ('Quận 11', 'Khu vực 11A'),
                 ('Quận 12', 'Khu vực 12A')
             ) AS v(districtname, name)
-            WHERE d.districtname = v.districtname
+            WHERE d.""DistrictName"" = v.districtname
             AND NOT EXISTS (
-                SELECT 1 FROM area WHERE area.districtid = d.districtid AND area.name = v.name
+                SELECT 1 FROM ""Areas"" WHERE ""DistrictId"" = d.""DistrictId"" AND ""Name"" = v.name
             );
         ");
         Console.WriteLine("✅ Area data seeded successfully");
@@ -275,26 +310,26 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO team (areaid, name, teamtype) 
-            SELECT a.areaid, v.name, v.teamtype::team_type
-            FROM area a
-            INNER JOIN district d ON a.districtid = d.districtid, (VALUES
-                ('Khu vực 1A', 'Team Alpha', 'Main'),
-                ('Khu vực 1A', 'Team Beta', 'Support'),
-                ('Khu vực 1B', 'Team Gamma', 'Main'),
-                ('Khu vực 2A', 'Team Delta', 'Main'),
-                ('Khu vực 2A', 'Team Epsilon', 'Support'),
-                ('Khu vực 2B', 'Team Zeta', 'Main'),
-                ('Khu vực 3A', 'Team Eta', 'Main'),
-                ('Khu vực 4A', 'Team Theta', 'Main'),
-                ('Khu vực 7A', 'Team North', 'Main'),
-                ('Khu vực 7B', 'Team South', 'Main'),
-                ('Khu vực 9A', 'Team East', 'Support'),
-                ('Khu vực 12A', 'Team West', 'Main')
-            ) AS v(areaname, name, teamtype)
-            WHERE a.name = v.areaname
+            INSERT INTO ""Teams"" (""AreaId"", ""Name"") 
+            SELECT a.""AreaId"", v.name
+            FROM ""Areas"" a
+            INNER JOIN ""Districts"" d ON a.""DistrictId"" = d.""DistrictId"", (VALUES
+                ('Khu vực 1A', 'Team Alpha'),
+                ('Khu vực 1A', 'Team Beta'),
+                ('Khu vực 1B', 'Team Gamma'),
+                ('Khu vực 2A', 'Team Delta'),
+                ('Khu vực 2A', 'Team Epsilon'),
+                ('Khu vực 2B', 'Team Zeta'),
+                ('Khu vực 3A', 'Team Eta'),
+                ('Khu vực 4A', 'Team Theta'),
+                ('Khu vực 7A', 'Team North'),
+                ('Khu vực 7B', 'Team South'),
+                ('Khu vực 9A', 'Team East'),
+                ('Khu vực 12A', 'Team West')
+            ) AS v(areaname, name)
+            WHERE a.""Name"" = v.areaname
             AND NOT EXISTS (
-                SELECT 1 FROM team WHERE team.areaid = a.areaid AND team.name = v.name
+                SELECT 1 FROM ""Teams"" WHERE ""AreaId"" = a.""AreaId"" AND ""Name"" = v.name
             );
         ");
         Console.WriteLine("✅ Team data seeded successfully");
@@ -304,6 +339,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"⚠️  Team seed failed (might already exist): {ex.Message}");
     }
 }
+*/
 
 // Configure the HTTP request pipeline
 // Enable Swagger in all environments (for development/testing purposes)
