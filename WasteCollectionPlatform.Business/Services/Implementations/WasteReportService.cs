@@ -313,7 +313,7 @@ public class WasteReportService : IWasteReportService
             throw new BusinessRuleException("Only reports in Pending status can be cancelled");
 
         // Ch? set Status = Cancelled, khÃ´ng thÃªm field CanceledReason
-        report.Status = ReportStatus.Cancelled;
+        report.Status = ReportStatus.Failed;
 
         await _wasteReportRepo.UpdateAsync(report);
         await _wasteReportRepo.SaveChangesAsync();
@@ -508,10 +508,6 @@ public class WasteReportService : IWasteReportService
 		}
 	}
 
-	public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId)
-	{
-		return await _wasteReportRepo.GetByCitizenIdAsync(citizenId);
-	}
 
 public async Task<bool> DeleteAsync(int id)
 	{

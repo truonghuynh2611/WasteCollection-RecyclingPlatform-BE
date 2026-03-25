@@ -1,4 +1,4 @@
-﻿using WasteCollectionPlatform.Common.DTOs.Request.Admin;
+using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.Common.Enums;
@@ -21,7 +21,9 @@ public interface IWasteReportService
 		string? collectorImageUrl,
 		decimal? latitude,
 		decimal? longitude);
-	Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId);
-Task<bool> DeleteAsync(int id);
+    Task ConfirmReportAsync(int reportId, int collectorId);
+    Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
+    Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto);
+    Task<bool> DeleteAsync(int id);
 }
 
