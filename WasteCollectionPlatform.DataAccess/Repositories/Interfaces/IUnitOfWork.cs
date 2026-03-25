@@ -20,6 +20,7 @@ public interface IUnitOfWork : IDisposable
     IAreaRepository Areas { get; }
     ISystemConfigurationRepository SystemConfigurations { get; }
     IWasteReportItemRepository WasteReportItems { get; }
+    IReportAssignmentRepository ReportAssignments { get; }
 
     Task<int> SaveChangesAsync();
     Task<IDbContextTransaction> BeginTransactionAsync();

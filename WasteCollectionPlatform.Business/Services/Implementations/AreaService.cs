@@ -64,10 +64,12 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
             var areas = await _unitOfWork.Areas.GetAllAsync();
             var districts = await _unitOfWork.Districts.GetAllAsync();
             var teams = await _unitOfWork.Teams.GetAllAsync();
+            var reports = await _unitOfWork.WasteReports.GetAllAsync();
             
             return areas.Select(a => {
                 var district = districts.FirstOrDefault(d => d.DistrictId == a.DistrictId);
                 var areaTeams = teams.Where(t => t.AreaId == a.AreaId).ToList();
+                var areaReports = reports.Where(r => r.AreaId == a.AreaId).ToList();
                 
                 return new {
                     areaId = a.AreaId,
@@ -78,7 +80,7 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                         districtName = district.DistrictName
                     } : null,
                     teamCount = areaTeams.Count,
-                    totalReports = 0 // Placeholder or fetch from waste reports
+                    totalReports = areaReports.Count
                 };
             });
         }

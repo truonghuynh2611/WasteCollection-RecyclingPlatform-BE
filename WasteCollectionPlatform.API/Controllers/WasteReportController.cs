@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 using WasteCollectionPlatform.Common.DTOs.Response.Common;
+using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.Common.Exceptions;
 
 namespace WasteCollectionPlatform.API.Controllers;
@@ -230,6 +231,29 @@ public class WasteReportController : ControllerBase
         {
             _logger.LogError(ex, "Error updating waste report {ReportId}", id);
             return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet("admin/pending")]
+    public async Task<IActionResult> GetPending()
+    {
+        try
+        {
+            var reports = await _wasteReportService.GetAllAsync();
+            var pending = reports.Where(r => r.Status == ReportStatus.Pending)
+                .Select(r => new
+                {
+                    reportId = r.ReportId,
+                    description = r.Description,
+                    wasteType = r.WasteType,
+                    areaName = r.Area?.Name,
+                    createdAt = r.CreatedAt
+                });
+            return Ok(ApiResponse<object>.SuccessResponse(pending));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
 

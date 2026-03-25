@@ -60,7 +60,9 @@ public partial class WasteManagementContext : DbContext
 
             entity.ToTable("Areas");
 
-            entity.Property(e => e.AreaId).HasColumnName("AreaId");
+            entity.Property(e => e.AreaId)
+                .HasColumnName("AreaId")
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.DistrictId).HasColumnName("DistrictId");
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
@@ -125,7 +127,9 @@ public partial class WasteManagementContext : DbContext
 
             entity.ToTable("Districts");
 
-            entity.Property(e => e.DistrictId).HasColumnName("DistrictId");
+            entity.Property(e => e.DistrictId)
+                .HasColumnName("DistrictId")
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.DistrictName)
                 .HasMaxLength(150)
                 .HasColumnName("DistrictName");

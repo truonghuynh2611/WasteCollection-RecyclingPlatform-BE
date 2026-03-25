@@ -26,6 +26,7 @@ public class UnitOfWork : IUnitOfWork
     private IAreaRepository? _areas;
     private ISystemConfigurationRepository? _systemConfigurations;
     private IWasteReportItemRepository? _wasteReportItems;
+    private IReportAssignmentRepository? _reportAssignments;
 
     public UnitOfWork(WasteManagementContext context)
     {
@@ -71,6 +72,9 @@ public class UnitOfWork : IUnitOfWork
 
     public IWasteReportItemRepository WasteReportItems =>
         _wasteReportItems ??= new WasteReportItemRepository(_context);
+
+    public IReportAssignmentRepository ReportAssignments =>
+        _reportAssignments ??= new ReportAssignmentRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

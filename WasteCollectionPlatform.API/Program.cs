@@ -20,7 +20,6 @@ using WasteCollectionPlatform.Common.Helpers;
 using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Repositories.Implementations;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
-using WasteCollectionPlatform.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -154,6 +153,7 @@ builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IDistrictService, DistrictService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -247,9 +247,6 @@ app.UseAuthorization();
 app.UseStaticFiles();
 
 app.MapControllers();
-app.MapHub<NotificationHub>("/notificationHub");
-
-// Map SignalR hub
 app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

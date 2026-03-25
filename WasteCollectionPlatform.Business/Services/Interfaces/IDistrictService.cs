@@ -1,2 +1,8 @@
-// TODO: Implement IDistrictService
-// This file is part of the WasteCollectionPlatform.Business project
+using WasteCollectionPlatform.DataAccess.Entities;
+
+namespace WasteCollectionPlatform.Business.Services.Interfaces;
+
+public interface IDistrictService
+{
+    Task<IEnumerable<District>> GetAllAsync();
+}

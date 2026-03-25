@@ -274,37 +274,4 @@ public class AuthController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError));
         }
     }
-    /// <summary>
-    /// Resend verification email
-    /// </summary>
-    /// <param name="email">User email</param>
-    /// <returns>Success response</returns>
-    [HttpPost("resend-code")]
-    public async Task<IActionResult> ResendCode([FromBody] string email)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(email))
-            {
-                return BadRequest(ApiResponse<object>.ErrorResponse("Email is required."));
-            }
-            
-            await _authService.ResendVerificationEmailAsync(email);
-            
-            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Verification email resent successfully."));
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
-        }
-        catch (BusinessRuleException ex)
-        {
-            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during resend-code request for email: {Email}", email);
-            return StatusCode(500, ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError));
-        }
-    }
 }

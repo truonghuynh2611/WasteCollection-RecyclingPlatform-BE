@@ -109,4 +109,27 @@ public class CollectorController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse("An error occurred while updating status."));
         }
     }
+
+    [HttpGet("admin/all")]
+    public async Task<IActionResult> GetAllForAdmin()
+    {
+        try
+        {
+            var collectors = await _unitOfWork.Collectors.GetAllAsync();
+            var result = collectors.Select(c => new
+            {
+                collectorId = c.CollectorId,
+                userId = c.UserId,
+                fullName = c.User?.FullName,
+                teamId = c.TeamId,
+                role = c.Role.ToString(),
+                status = c.Status
+            });
+            return Ok(ApiResponse<object>.SuccessResponse(result));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
 }
