@@ -1,0 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace WasteCollectionPlatform.DataAccess.Entities;
+
+public partial class ReportAssignment
+{
+    public int AssignmentId { get; set; }
+
+    public int ReportId { get; set; }
+
+    [Column("TeamId")]
+    public int TeamId { get; set; }
+
+    public virtual WasteReport Report { get; set; } = null!;
+
+    public virtual Team Team { get; set; } = null!;
+}
