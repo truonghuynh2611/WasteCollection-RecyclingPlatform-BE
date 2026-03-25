@@ -9,4 +9,5 @@ public class CreateWasteReportDto
     public List<WasteReportItemDto> Items { get; set; } = new List<WasteReportItemDto>();
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
+    public IFormFile? ImageFile { get; set; }
 }

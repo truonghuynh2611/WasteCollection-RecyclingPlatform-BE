@@ -312,13 +312,13 @@ public class WasteReportService : IWasteReportService
         if (report.Status != ReportStatus.Pending)
             throw new BusinessRuleException("Only reports in Pending status can be cancelled");
 
-        // Ch? set Status = Cancelled, không thêm field CanceledReason
-        report.Status = ReportStatus.Failed;
+        // Ch? set Status = Cancelled, khÃ´ng thÃªm field CanceledReason
+        report.Status = ReportStatus.Cancelled;
 
         await _wasteReportRepo.UpdateAsync(report);
         await _wasteReportRepo.SaveChangesAsync();
 
-        // N?u mu?n, log lư do cancel
+        // N?u mu?n, log lÃ½ do cancel
         if (!string.IsNullOrEmpty(request.Reason))
         {
             _logger.LogInformation("Admin cancelled report {ReportId}. Reason: {Reason}", request.ReportId, request.Reason);
@@ -508,7 +508,12 @@ public class WasteReportService : IWasteReportService
 		}
 	}
 
-	public async Task<bool> DeleteAsync(int id)
+	public async Task<IEnumerable<WasteReport>> GetByCitizenIdAsync(int citizenId)
+	{
+		return await _wasteReportRepo.GetByCitizenIdAsync(citizenId);
+	}
+
+public async Task<bool> DeleteAsync(int id)
 	{
 		var report = await _wasteReportRepo.GetByIdAsync(id);
 		if (report == null)
@@ -575,3 +580,4 @@ public class WasteReportService : IWasteReportService
         return report;
     }
 }
+

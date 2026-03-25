@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WasteCollectionPlatform.Business.Services.Interfaces;
@@ -25,7 +25,8 @@ public class WasteReportController : ControllerBase
 	}
 
 	[HttpPost]
-	public async Task<IActionResult> CreateReport([FromForm] CreateWasteReportDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateReport([FromForm] CreateWasteReportDto dto)
 	{
 		try
 		{
@@ -60,21 +61,21 @@ public class WasteReportController : ControllerBase
 	}
 
 	[HttpGet("citizen/{citizenId}")]
-	public async Task<IActionResult> GetByCitizenId(int citizenId)
-	{
-		try
-		{
-			var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
-			return Ok(reports);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
-			return StatusCode(500, ex.Message);
-		}
-	}
+        public async Task<IActionResult> GetByCitizenId(int citizenId)
+        {
+                try
+                {
+                        var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
+                        return Ok(reports);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
+                        return StatusCode(500, ex.Message);
+                }
+        }
 
-	[HttpGet("{id}")]
+        [HttpGet("{id}")]
 	public async Task<IActionResult> GetById(int id)
 	{
 		try
@@ -184,7 +185,7 @@ public class WasteReportController : ControllerBase
     {
         try
         {
-            // ? truy?n nguy�n DTO
+            // ? truy?n nguyên DTO
             await _wasteReportService.CancelReportAsync(request);
 
             return Ok(ApiResponse<object>.SuccessResponse(null, "Report cancelled successfully"));
@@ -238,3 +239,5 @@ public class WasteReportController : ControllerBase
 		return User.IsInRole("Admin");
 	}
 }
+
+
