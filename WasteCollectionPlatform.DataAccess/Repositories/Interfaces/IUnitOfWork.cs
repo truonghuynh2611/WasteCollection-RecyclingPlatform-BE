@@ -19,6 +19,7 @@ public interface IUnitOfWork : IDisposable
     IPendingRegistrationRepository PendingRegistrations { get; }
     IAreaRepository Areas { get; }
     ISystemConfigurationRepository SystemConfigurations { get; }
+    IWasteReportItemRepository WasteReportItems { get; }
 
     Task<int> SaveChangesAsync();
     Task<IDbContextTransaction> BeginTransactionAsync();

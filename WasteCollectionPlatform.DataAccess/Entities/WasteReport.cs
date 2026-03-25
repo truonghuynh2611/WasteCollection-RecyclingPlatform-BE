@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using WasteCollectionPlatform.Common.Enums;
 
@@ -43,4 +43,6 @@ public partial class WasteReport
     public virtual ICollection<ReportAssignment> ReportAssignments { get; set; } = new List<ReportAssignment>();
 
     public virtual ICollection<ReportImage> ReportImages { get; set; } = new List<ReportImage>();
+
+    public virtual ICollection<WasteReportItem> WasteReportItems { get; set; } = new List<WasteReportItem>();
 }

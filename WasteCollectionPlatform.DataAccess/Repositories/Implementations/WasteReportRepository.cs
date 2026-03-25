@@ -20,6 +20,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Where(r => r.CitizenId == citizenId)
             .Include(r => r.PointHistories)
             .Include(r => r.ReportImages)
+            .Include(r => r.WasteReportItems)
             .Include(r => r.Area)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -42,6 +43,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Where(r => r.ReportAssignments.Any(ra => ra.TeamId == collector.TeamId))
             .Include(r => r.Citizen)
             .Include(r => r.ReportImages)
+            .Include(r => r.WasteReportItems)
             .Include(r => r.PointHistories)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -53,6 +55,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Include(w => w.Citizen)
             .Include(w => w.Area)
             .Include(w => w.PointHistories)
+            .Include(w => w.WasteReportItems)
             .ToListAsync();
     }
 
@@ -62,6 +65,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Include(w => w.Citizen)
             .Include(w => w.Area)
             .Include(w => w.PointHistories)
+            .Include(w => w.WasteReportItems)
             .FirstOrDefaultAsync(w => w.ReportId == id);
     }
 
@@ -95,6 +99,11 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
     {
         _context.WasteReports.Remove(wasteReport);
         return Task.CompletedTask;
+    }
+
+    public async Task AddReportImageAsync(ReportImage reportImage)
+    {
+        await _context.ReportImages.AddAsync(reportImage);
     }
 
     public async Task SaveChangesAsync()

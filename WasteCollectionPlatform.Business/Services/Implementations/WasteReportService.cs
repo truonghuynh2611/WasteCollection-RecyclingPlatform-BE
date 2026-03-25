@@ -120,24 +120,12 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("Area does not exist");
 		}
 
-		string? finalImageUrl = dto.ImageUrl;
-
-		// Handle local file upload
-		if (dto.ImageFile != null && dto.ImageFile.Length > 0)
-		{
-			finalImageUrl = await SaveImageAsync(dto.ImageFile);
-		}
-		else if (!string.IsNullOrEmpty(dto.ImageUrl) && !await IsValidImageUrlAsync(dto.ImageUrl))
-		{
-			throw new Exception("Invalid image source. Please provide a valid URL or upload a file.");
-		}
-
 		var wasteReport = new WasteReport
 		{
-			Description = dto.Description,
-			CitizenId = citizen.CitizenId, // Use the correct CitizenId from DB
+			Description = string.Join("; ", dto.Items.Select(i => $"{i.WasteType}: {i.Description}")),
+			CitizenId = citizen.CitizenId,
 			AreaId = dto.AreaId,
-			WasteType = dto.WasteType,
+			WasteType = string.Join(", ", dto.Items.Select(i => i.WasteType)),
 			CitizenLatitude = dto.Latitude,
 			CitizenLongitude = dto.Longitude,
 			CreatedAt = DateTime.UtcNow,
@@ -146,17 +134,39 @@ public class WasteReportService : IWasteReportService
 			TeamId = null
 		};
 
-		await _wasteReportRepo.AddAsync(wasteReport);
-		if (!string.IsNullOrEmpty(finalImageUrl))
+		await _unitOfWork.WasteReports.AddAsync(wasteReport);
+
+		foreach (var itemDto in dto.Items)
 		{
-			var image = new ReportImage
+			string? itemImageUrl = null;
+			if (itemDto.ImageFile != null && itemDto.ImageFile.Length > 0)
 			{
-				Imageurl = finalImageUrl,
-				Report = wasteReport
+				itemImageUrl = await SaveImageAsync(itemDto.ImageFile);
+			}
+
+			var reportItem = new WasteReportItem
+			{
+				WasteType = itemDto.WasteType,
+				Description = itemDto.Description,
+				ImageUrl = itemImageUrl,
+				WasteReport = wasteReport
 			};
-			await _reportImageRepo.AddAsync(image);
+
+			await _unitOfWork.WasteReportItems.AddAsync(reportItem);
+
+			// Also add the image to the general ReportImages collection for backward compatibility/summary
+			if (!string.IsNullOrEmpty(itemImageUrl))
+			{
+				var reportImage = new ReportImage
+				{
+					Imageurl = itemImageUrl,
+					Report = wasteReport
+				};
+				await _unitOfWork.WasteReports.AddReportImageAsync(reportImage);
+			}
 		}
-		await _wasteReportRepo.SaveChangesAsync();
+		
+		await _unitOfWork.SaveChangesAsync();
 
 		// Notify all Admins about the new report
 		try

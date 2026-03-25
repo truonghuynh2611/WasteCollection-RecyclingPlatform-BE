@@ -39,6 +39,7 @@ public partial class WasteManagementContext : DbContext
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
     public virtual DbSet<PendingRegistration> PendingRegistrations { get; set; }
+    public virtual DbSet<WasteReportItem> WasteReportItems { get; set; }
 
 
     public virtual DbSet<SystemConfiguration> SystemConfigurations { get; set; }
@@ -364,6 +365,18 @@ public partial class WasteManagementContext : DbContext
         // RefreshToken configuration
         modelBuilder.ApplyConfiguration(new Configurations.RefreshTokenConfiguration());
 
+
+        modelBuilder.Entity<WasteReportItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("WasteReportItems");
+            entity.Property(e => e.WasteType).HasMaxLength(50).IsRequired();
+            entity.HasOne(d => d.WasteReport)
+                .WithMany(p => p.WasteReportItems)
+                .HasForeignKey(d => d.ReportId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_item_report");
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }
