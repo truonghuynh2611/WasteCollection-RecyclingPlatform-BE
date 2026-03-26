@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WasteCollectionPlatform.Business.Services.Interfaces;
@@ -61,19 +61,19 @@ public class WasteReportController : ControllerBase
 	}
 
 	[HttpGet("citizen/{citizenId}")]
-        public async Task<IActionResult> GetByCitizenId(int citizenId)
-        {
-                try
-                {
-                        var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
-                        return Ok(reports);
-                }
-                catch (Exception ex)
-                {
-                        _logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
-                        return StatusCode(500, ex.Message);
-                }
-        }
+	public async Task<IActionResult> GetByCitizenId(int citizenId)
+	{
+		try
+		{
+			var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
+			return Ok(reports);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
+			return StatusCode(500, ex.Message);
+		}
+	}
 
         [HttpGet("{id}")]
 	public async Task<IActionResult> GetById(int id)
@@ -160,34 +160,55 @@ public class WasteReportController : ControllerBase
 	/// <param name="id">Waste Report ID</param>
 	/// <returns>Success message</returns>
 	[HttpPost("{id}/assign")]
-	[Authorize]
 	public async Task<IActionResult> AssignReport(int id)
 	{
 		try
 		{
-			// Only admin users can assign reports
-			if (!IsAdmin())
-			{
-				return Forbid();
-			}
-
-			await _wasteReportService.AssignReportAsync(id);
-			return Ok("Report assigned successfully");
+			await _wasteReportService.ApproveAndAssignToMainTeamAsync(id);
+			return Ok("Report approved and assigned to Main Team successfully");
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Error assigning waste report {ReportId}", id);
+			_logger.LogError(ex, "Error approving and assigning waste report {ReportId}", id);
 			return BadRequest(ex.Message);
 		}
 	}
+    [HttpPost("submit-completion")]
+    public async Task<IActionResult> SubmitCompletion([FromForm] SubmitCompletionEvidenceDto dto)
+    {
+        try
+        {
+            await _wasteReportService.SubmitCompletionEvidenceAsync(dto.ReportId, dto.LeaderId, dto.ImageFiles, dto.ImageUrls, dto.Note);
+            return Ok("Evidence submitted for review");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error submitting completion for report {ReportId}", dto.ReportId);
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("verify-completion")]
+    public async Task<IActionResult> VerifyCompletion([FromBody] VerifyCompletionDto dto)
+    {
+        try
+        {
+            await _wasteReportService.VerifyAndFinalizeReportAsync(dto.ReportId, dto.IsApproved, dto.AdminNote);
+            return Ok(dto.IsApproved ? "Report finalized and points awarded" : "Report rejected and returned to team");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error verifying completion for report {ReportId}", dto.ReportId);
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost("cancel-report")]
     public async Task<IActionResult> CancelReport([FromBody] CancelReportRequestDto request)
     {
         try
         {
-            // ? truy?n nguyên DTO
             await _wasteReportService.CancelReportAsync(request);
-
             return Ok(ApiResponse<object>.SuccessResponse(null, "Report cancelled successfully"));
         }
         catch (BusinessRuleException ex)

@@ -48,8 +48,9 @@ public partial class WasteManagementContext : DbContext
         modelBuilder
             .HasPostgresEnum("image_type", new[] { "Citizen", "Collector" })
             .HasPostgresEnum("point_transaction_type", new[] { "Earn", "Redeem" })
-            .HasPostgresEnum("report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled" })
+            .HasPostgresEnum("report_status", new[] { "Pending", "Accepted", "Assigned", "OnTheWay", "Collected", "Failed", "ReportedByTeam" })
             .HasPostgresEnum("team_type", new[] { "Main", "Support" })
+            .HasPostgresEnum("collector_role", new[] { "Member", "Leader" })
             .HasPostgresEnum<UserRole>("user_role");
 
         modelBuilder.Entity<Area>(entity =>
@@ -217,6 +218,7 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.ImageId).HasColumnName("ImageId");
             entity.Property(e => e.Imageurl).HasColumnName("ImageUrl");
             entity.Property(e => e.ReportId).HasColumnName("ReportId");
+            entity.Property(e => e.ImageType).HasColumnName("ImageType");
 
             entity.HasOne(d => d.Report).WithMany(p => p.ReportImages)
                 .HasForeignKey(d => d.ReportId)
@@ -237,6 +239,11 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
                 .HasColumnName("Name");
+
+            entity.Property(e => e.Type)
+                .HasColumnName("Type")
+                .HasConversion<int>()
+                .HasDefaultValue(TeamType.Main);
 
             entity.HasOne(d => d.Area).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.AreaId)

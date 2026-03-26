@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
 
@@ -12,4 +13,5 @@ public class CreateWasteReportDto
     public string WasteType { get; set; } = string.Empty;
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
+    public List<WasteReportItemDto> Items { get; set; } = new List<WasteReportItemDto>();
 }

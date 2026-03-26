@@ -32,4 +32,11 @@ public class PendingRegistration
     public DateTime Expiry { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Thêm trường Role để lưu loại tài khoản đăng ký
+    [Required]
+    public WasteCollectionPlatform.Common.Enums.UserRole Role { get; set; }
+
+    // Thêm TeamId cho Collector
+    public int? TeamId { get; set; }
 }

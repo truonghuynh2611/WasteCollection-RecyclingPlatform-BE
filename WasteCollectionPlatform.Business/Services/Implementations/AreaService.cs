@@ -78,6 +78,12 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                         districtName = district.DistrictName
                     } : null,
                     teamCount = areaTeams.Count,
+                    teams = areaTeams.Select(t => new {
+                        teamId = t.TeamId,
+                        name = t.Name,
+                        areaId = t.AreaId,
+                        type = (int)t.Type
+                    }).ToList(),
                     totalReports = 0 // Placeholder or fetch from waste reports
                 };
             });
@@ -87,7 +93,20 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
         {
             var area = await _unitOfWork.Areas.GetByIdAsync(areaId);
             if (area == null) return null;
-            return new { area.AreaId, area.Name, area.DistrictId };
+            var teams = await _unitOfWork.Teams.GetAllAsync();
+            var areaTeams = teams.Where(t => t.AreaId == areaId).ToList();
+
+            return new { 
+                area.AreaId, 
+                area.Name, 
+                area.DistrictId,
+                teams = areaTeams.Select(t => new {
+                    teamId = t.TeamId,
+                    name = t.Name,
+                    areaId = t.AreaId,
+                    type = (int)t.Type
+                }).ToList()
+            };
         }
 
         public async Task UpdateAreaAsync(int areaId, UpdateAreaRequestDto request)

@@ -19,8 +19,7 @@ public class CreateCollectorRequestDto
     [Required(ErrorMessage = "Số điện thoại không được để trống")]
     public string Phone { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng chọn Team")]
-    public int TeamId { get; set; }
+    public int? TeamId { get; set; }
 
     public CollectorRole Role { get; set; } = CollectorRole.Member;
 }

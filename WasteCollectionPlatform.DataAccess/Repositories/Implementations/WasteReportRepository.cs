@@ -39,7 +39,7 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         
         return await _dbSet
             .Include(r => r.ReportAssignments)
-            .Where(r => r.ReportAssignments.Any(ra => ra.TeamId == collector.TeamId))
+            .Where(r => r.TeamId == collector.TeamId || r.ReportAssignments.Any(ra => ra.TeamId == collector.TeamId))
             .Include(r => r.Citizen)
             .Include(r => r.ReportImages)
             .Include(r => r.PointHistories)

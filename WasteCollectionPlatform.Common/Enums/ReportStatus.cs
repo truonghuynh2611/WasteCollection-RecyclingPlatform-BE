@@ -22,5 +22,8 @@ public enum ReportStatus
     Collected = 4,
 
     /// <summary>Report failed / cancelled – citizen does not earn points</summary>
-    Failed = 5
+    Failed = 5,
+
+    /// <summary>Team has finished task and uploaded evidence, waiting for admin verification</summary>
+    ReportedByTeam = 6
 }

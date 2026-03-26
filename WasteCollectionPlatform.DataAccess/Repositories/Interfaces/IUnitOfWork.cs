@@ -1,6 +1,8 @@
 namespace WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
 using Microsoft.EntityFrameworkCore.Storage;
+using WasteCollectionPlatform.Common.Enums;
+using WasteCollectionPlatform.DataAccess.Entities;
 
 /// <summary>
 /// Unit of Work pattern interface for transaction management

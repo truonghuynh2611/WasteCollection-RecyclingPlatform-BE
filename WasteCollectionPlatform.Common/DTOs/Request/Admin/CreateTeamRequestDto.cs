@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using WasteCollectionPlatform.Common.Enums;
 
 namespace WasteCollectionPlatform.Common.DTOs.Request.Admin
 {
@@ -10,5 +6,6 @@ namespace WasteCollectionPlatform.Common.DTOs.Request.Admin
     {
         public int AreaId { get; set; }
         public string Name { get; set; }
+        public TeamType Type { get; set; }
     }
 }
