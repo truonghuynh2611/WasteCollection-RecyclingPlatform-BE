@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.Collector;
+using WasteCollectionPlatform.Common.Enums;
 
 namespace WasteCollectionPlatform.Business.Services.Interfaces
 {
@@ -26,7 +27,7 @@ namespace WasteCollectionPlatform.Business.Services.Interfaces
         Task SetLeaderAsync(int teamId, int collectorId);
         Task RemoveLeaderAsync(int teamId, int collectorId);
         Task<List<CollectorDto>> GetAllCollectorsAsync();
-        Task AssignTeamToAreaAsync(int teamId, int areaId);
+        Task AssignTeamToAreaAsync(int teamId, int areaId, TeamType type);
     }
 }
 

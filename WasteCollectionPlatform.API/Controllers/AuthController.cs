@@ -7,6 +7,9 @@ using WasteCollectionPlatform.Common.DTOs.Response.Common;
 using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.Common.Exceptions;
 
+using WasteCollectionPlatform.DataAccess.Context;
+using Microsoft.EntityFrameworkCore;
+
 namespace WasteCollectionPlatform.API.Controllers;
 
 [ApiController]
@@ -15,7 +18,7 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
-    
+
     public AuthController(IAuthService authService, ILogger<AuthController> logger)
     {
         _authService = authService;
@@ -274,4 +277,5 @@ public class AuthController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ErrorMessages.InternalServerError));
         }
     }
+
 }

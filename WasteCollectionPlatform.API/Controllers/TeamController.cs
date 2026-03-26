@@ -302,12 +302,16 @@ public class TeamController : ControllerBase
     }
 
     [HttpPost("{teamId}/assign-area/{areaId}")]
-    public async Task<IActionResult> AssignTeamToArea(int teamId, int areaId)
+    public async Task<IActionResult> AssignTeamToArea(int teamId, int areaId, [FromQuery] TeamType type)
     {
         try
         {
-            await _teamService.AssignTeamToAreaAsync(teamId, areaId);
+            await _teamService.AssignTeamToAreaAsync(teamId, areaId, type);
             return Ok(ApiResponse<object>.SuccessResponse(null, "Đã gán team vào khu vực thành công"));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (KeyNotFoundException ex)
         {
@@ -320,57 +324,4 @@ public class TeamController : ControllerBase
         }
     }
 
-    [HttpPost("fix-db")]
-    public async Task<IActionResult> FixDb()
-    {
-        try
-        {
-            var teams = (await _unitOfWork.Teams.GetAllAsync()).ToList();
-            if (!teams.Any()) return BadRequest("No teams found. Please create some teams first.");
-
-            var currentCollectors = await _unitOfWork.Collectors.GetAllAsync();
-            int currentCount = currentCollectors.Count();
-            int targetNew = 20;
-
-            var random = new Random();
-            for (int i = 0; i < targetNew; i++)
-            {
-                var email = $"collector_{Guid.NewGuid().ToString().Substring(0, 8)}@waste.com";
-                var team = teams[i % teams.Count];
-                
-                var request = new CreateCollectorRequestDto
-                {
-                    FullName = $"Collector {currentCount + i + 1}",
-                    Email = email,
-                    Password = "Password123",
-                    Phone = $"09{random.Next(10000000, 99999999)}",
-                    TeamId = team.TeamId,
-                    Role = CollectorRole.Member
-                };
-
-                await _teamService.CreateCollectorAsync(request);
-            }
-
-            // Ensure each team has a leader
-            foreach (var team in teams)
-            {
-                var teamCollectors = await _teamService.GetCollectorsByTeamIdAsync(team.TeamId);
-                if (!teamCollectors.Any(c => c.Role == "Leader"))
-                {
-                    var firstMember = teamCollectors.FirstOrDefault();
-                    if (firstMember != null)
-                    {
-                        await _teamService.SetLeaderAsync(team.TeamId, firstMember.CollectorId);
-                    }
-                }
-            }
-
-            return Ok(ApiResponse<object>.SuccessResponse(null, $"Successfully seeded {targetNew} collectors and verified leaders."));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in FixDb");
-            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
-        }
-    }
 }

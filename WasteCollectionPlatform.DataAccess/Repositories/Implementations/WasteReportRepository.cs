@@ -50,17 +50,20 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
     public override async Task<IEnumerable<WasteReport>> GetAllAsync()
     {
         return await _context.WasteReports
-            .Include(w => w.Citizen)
+            .Include(w => w.Citizen).ThenInclude(c => c.User)
             .Include(w => w.Area)
+            .Include(w => w.ReportImages)
             .Include(w => w.PointHistories)
+            .OrderByDescending(w => w.CreatedAt)
             .ToListAsync();
     }
 
     public override async Task<WasteReport?> GetByIdAsync(int id)
     {
         return await _context.WasteReports
-            .Include(w => w.Citizen)
+            .Include(w => w.Citizen).ThenInclude(c => c.User)
             .Include(w => w.Area)
+            .Include(w => w.ReportImages)
             .Include(w => w.PointHistories)
             .FirstOrDefaultAsync(w => w.ReportId == id);
     }

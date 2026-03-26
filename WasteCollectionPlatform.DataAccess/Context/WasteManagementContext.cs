@@ -243,7 +243,7 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Type)
                 .HasColumnName("Type")
                 .HasConversion<int>()
-                .HasDefaultValue(TeamType.Main);
+                .HasDefaultValue(TeamType.Unassigned);
 
             entity.HasOne(d => d.Area).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.AreaId)

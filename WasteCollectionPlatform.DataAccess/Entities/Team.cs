@@ -16,7 +16,7 @@ public partial class Team
 
     public int CurrentTaskCount { get; set; }
 
-    public TeamType Type { get; set; }
+    public TeamType Type { get; set; } = TeamType.Unassigned;
 
     public virtual Area? Area { get; set; }
 
