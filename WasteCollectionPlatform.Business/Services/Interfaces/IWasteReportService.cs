@@ -17,8 +17,9 @@ public interface IWasteReportService
     Task ProcessReportAsync(
 		int reportId,
 		int collectorId,
-		bool isValid,
-		string? collectorImageUrl);
+		ReportStatus status,
+		string? note,
+		string? collectorImageUrl = null);
     Task ConfirmReportAsync(int reportId, int collectorId);
     Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
     Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto);

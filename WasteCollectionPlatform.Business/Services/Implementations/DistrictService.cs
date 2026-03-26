@@ -17,4 +17,9 @@ public class DistrictService : IDistrictService
     {
         return await _unitOfWork.Districts.GetAllAsync();
     }
+
+    public async Task<District?> GetByIdAsync(int id)
+    {
+        return await _unitOfWork.Districts.GetDistrictWithAreasAsync(id);
+    }
 }

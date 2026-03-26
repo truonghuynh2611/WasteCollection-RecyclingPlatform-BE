@@ -5,4 +5,5 @@ namespace WasteCollectionPlatform.Business.Services.Interfaces;
 public interface IDistrictService
 {
     Task<IEnumerable<District>> GetAllAsync();
+    Task<District?> GetByIdAsync(int id);
 }

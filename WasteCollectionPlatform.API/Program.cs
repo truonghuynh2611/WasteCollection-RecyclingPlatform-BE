@@ -22,6 +22,8 @@ using WasteCollectionPlatform.DataAccess.Repositories.Implementations;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+builder.WebHost.UseUrls("http://0.0.0.0:61436");
 
 // Set default culture to Invariant to ensure consistent decimal parsing
 System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
@@ -120,7 +122,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "*" })
+        policy.SetIsOriginAllowed(_ => true) // Allow any origin for development
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -221,10 +223,22 @@ using (var scope = app.Services.CreateScope())
     }
 
     try {
-        try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""Users"" RENAME COLUMN ""tokenversion"" TO ""TokenVersion"";"); } catch { }
-        context.Database.ExecuteSqlRaw(@"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""TokenVersion"" INTEGER NOT NULL DEFAULT 0;");
+        string updateSql = @"
+            ALTER TABLE ""WasteReports"" ADD COLUMN IF NOT EXISTS ""Note"" TEXT;
+            ALTER TABLE ""Collectors"" ALTER COLUMN ""TeamId"" DROP NOT NULL;
+        ";
+        context.Database.ExecuteSqlRaw(updateSql);
+        
+        // Add new enum values to report_status if they don't exist
+        var enums = new[] { "Accepted", "OnTheWay", "Collected", "Failed" };
+        foreach (var val in enums)
+        {
+            try {
+                context.Database.ExecuteSqlRaw($@"ALTER TYPE report_status ADD VALUE '{val}';");
+            } catch { /* Ignore if it already exists */ }
+        }
     } catch (Exception ex) {
-        Console.WriteLine($"Users Migration note (safe to ignore): {ex.Message}");
+        Console.WriteLine($"WasteReport/Collector Migration note: {ex.Message}");
     }
 }
 // Configure the HTTP request pipeline

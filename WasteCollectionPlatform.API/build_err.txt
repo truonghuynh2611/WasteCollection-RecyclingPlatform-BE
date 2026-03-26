@@ -1,0 +1,13 @@
+﻿  WasteCollectionPlatform.Common -> D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Common\bin\Debug\net8.0\WasteCollectionPlatform.Common.dll
+  WasteCollectionPlatform.DataAccess -> D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.DataAccess\bin\Debug\net8.0\WasteCollectionPlatform.DataAccess.dll
+D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\Services\Interfaces\ITeamService.cs(11,38): error CS0246: The type or namespace name 'AddCollectorToTeamDto' could not be found (are you missing a using directive or an assembly reference?) [D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\WasteCollectionPlatform.Business.csproj]
+D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\Services\Implementations\TeamService.cs(16,32): error CS0535: 'TeamService' does not implement interface member 'ITeamService.AddCollectorToTeamAsync(AddCollectorToTeamDto)' [D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\WasteCollectionPlatform.Business.csproj]
+
+Build FAILED.
+
+D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\Services\Interfaces\ITeamService.cs(11,38): error CS0246: The type or namespace name 'AddCollectorToTeamDto' could not be found (are you missing a using directive or an assembly reference?) [D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\WasteCollectionPlatform.Business.csproj]
+D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\Services\Implementations\TeamService.cs(16,32): error CS0535: 'TeamService' does not implement interface member 'ITeamService.AddCollectorToTeamAsync(AddCollectorToTeamDto)' [D:\SWP391_SP26\WasteCollection-RecyclingPlatform-BE\WasteCollectionPlatform.Business\WasteCollectionPlatform.Business.csproj]
+    0 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:01.34

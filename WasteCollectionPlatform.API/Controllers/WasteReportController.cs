@@ -76,6 +76,21 @@ public class WasteReportController : ControllerBase
                 }
         }
 
+        [HttpGet("collector/{collectorId}")]
+        public async Task<IActionResult> GetByCollectorId(int collectorId)
+        {
+                try
+                {
+                        var reports = await _wasteReportService.GetByCollectorIdAsync(collectorId);
+                        return Ok(reports);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "Error retrieving waste reports for collector {CollectorId}", collectorId);
+                        return StatusCode(500, ex.Message);
+                }
+        }
+
         [HttpGet("{id}")]
 	public async Task<IActionResult> GetById(int id)
 	{
@@ -105,7 +120,8 @@ public class WasteReportController : ControllerBase
 			await _wasteReportService.ProcessReportAsync(
 				dto.ReportId,
 				dto.CollectorId,
-				dto.IsValid,
+				dto.Status,
+				dto.Note,
 				dto.CollectorImageUrl);
 
 			return Ok("Report processed successfully");

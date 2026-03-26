@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WasteCollectionPlatform.Common.Enums;
@@ -12,9 +13,11 @@ using WasteCollectionPlatform.DataAccess.Context;
 namespace WasteCollectionPlatform.DataAccess.Migrations
 {
     [DbContext(typeof(WasteManagementContext))]
-    partial class WasteManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20260326043359_AddNoteToWasteReport")]
+    partial class AddNoteToWasteReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,7 +27,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "collector_role", "collector_role", new[] { "member", "leader" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "image_type", new[] { "Citizen", "Collector" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "point_transaction_type", new[] { "Earn", "Redeem" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "report_status", new[] { "Pending", "Accepted", "Assigned", "OnTheWay", "Collected", "Failed" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "team_type", new[] { "Main", "Support" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", "user_role", new[] { "citizen", "collector", "enterprise", "admin", "manager" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -607,8 +610,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
                         .HasColumnName("ExpireTime");
 
                     b.Property<string>("Note")
-                        .HasColumnType("text")
-                        .HasColumnName("Note");
+                        .HasColumnType("text");
 
                     b.Property<ReportStatus>("Status")
                         .HasColumnType("report_status")

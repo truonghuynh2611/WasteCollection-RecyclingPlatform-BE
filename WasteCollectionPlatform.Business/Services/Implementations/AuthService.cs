@@ -96,12 +96,18 @@ public class AuthService : IAuthService
         
         // Get CitizenId and TotalPoints if user is a citizen
         int? citizenId = null;
+        int? collectorId = null;
         int totalPoints = 0;
         if (user.Role == UserRole.Citizen)
         {
             var citizen = await _unitOfWork.Citizens.GetByUserIdAsync(user.UserId);
             citizenId = citizen?.CitizenId;
             totalPoints = citizen?.TotalPoints ?? 0;
+        }
+        else if (user.Role == UserRole.Collector)
+        {
+            var collector = await _unitOfWork.Collectors.GetByUserIdAsync(user.UserId);
+            collectorId = collector?.CollectorId;
         }
 
         return new AuthResponseDto
@@ -114,6 +120,7 @@ public class AuthService : IAuthService
             Role = user.Role.ToString(),
             Status = user.Status ?? false,
             CitizenId = citizenId,
+            CollectorId = collectorId,
             TotalPoints = totalPoints,
             ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
         };
@@ -157,6 +164,7 @@ public class AuthService : IAuthService
         
         // 2. Get the latest pending info to send email
         var latestPending = await _unitOfWork.PendingRegistrations.GetByEmailAsync(request.Email);
+        if (latestPending == null) throw new BusinessRuleException("Registration process failed. Please try again.");
         
         // 3. Send verification email (async)
         _ = Task.Run(async () =>

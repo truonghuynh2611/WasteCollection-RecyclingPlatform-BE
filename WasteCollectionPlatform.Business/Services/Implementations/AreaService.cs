@@ -80,7 +80,8 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                         districtName = district.DistrictName
                     } : null,
                     teamCount = areaTeams.Count,
-                    totalReports = areaReports.Count
+                    totalReports = areaReports.Count,
+                    teams = areaTeams.Select(t => new { t.TeamId, t.Name }).ToList()
                 };
             });
         }

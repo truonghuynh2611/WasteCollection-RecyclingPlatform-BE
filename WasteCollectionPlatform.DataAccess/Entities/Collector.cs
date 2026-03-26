@@ -12,7 +12,7 @@ public partial class Collector
     public int UserId { get; set; }
 
     [Column("TeamId")]
-    public int TeamId { get; set; }
+    public int? TeamId { get; set; }
 
     public bool? Status { get; set; }
 

@@ -21,6 +21,8 @@ public partial class WasteReport
     public DateTime? ExpireTime { get; set; }
 
     public ReportStatus Status { get; set; }
+    
+    public string? Note { get; set; }
 
     public int? TeamId { get; set; }
 
