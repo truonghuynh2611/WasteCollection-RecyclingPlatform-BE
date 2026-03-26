@@ -25,5 +25,10 @@ public interface IWasteReportService
     Task ConfirmReportAsync(int reportId, int collectorId);
     Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto);
     Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
+    
+    // Flow 3: Sequential Workflow
+    Task ApproveAndAssignToMainTeamAsync(int reportId);
+    Task SubmitCompletionEvidenceAsync(int reportId, int leaderId, Microsoft.AspNetCore.Http.IFormFileCollection? imageFiles, List<string>? imageUrls, string? note);
+    Task VerifyAndFinalizeReportAsync(int reportId, bool isApproved, string? adminNote);
 }
 

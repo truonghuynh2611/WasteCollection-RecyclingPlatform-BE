@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using WasteCollectionPlatform.Common.Enums;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.Collector;
@@ -44,12 +45,15 @@ public class TeamController : ControllerBase
             var result = new List<object>();
             foreach (var t in teams)
             {
+                var area = t.AreaId.HasValue ? await _unitOfWork.Areas.GetByIdAsync(t.AreaId.Value) : null;
                 var collectors = await _teamService.GetCollectorsByTeamIdAsync(t.TeamId);
                 result.Add(new
                 {
                     teamId = t.TeamId,
                     name = t.Name,
                     areaId = t.AreaId,
+                    areaName = area?.Name,
+                    type = (int)t.Type,
                     collectors = collectors
                 });
             }
@@ -82,6 +86,7 @@ public class TeamController : ControllerBase
                 return NotFound(ApiResponse<object>.ErrorResponse($"Team with ID {id} not found."));
             }
 
+            var area = team.AreaId.HasValue ? await _unitOfWork.Areas.GetByIdAsync(team.AreaId.Value) : null;
             var collectors = await _teamService.GetCollectorsByTeamIdAsync(id);
 
             var teamDto = new
@@ -89,6 +94,8 @@ public class TeamController : ControllerBase
                 teamId = team.TeamId,
                 name = team.Name,
                 areaId = team.AreaId,
+                areaName = area?.Name,
+                type = (int)team.Type,
                 collectors = collectors
             };
 
@@ -312,4 +319,59 @@ public class TeamController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+
+    [HttpPost("fix-db")]
+    public async Task<IActionResult> FixDb()
+    {
+        try
+        {
+            var teams = (await _unitOfWork.Teams.GetAllAsync()).ToList();
+            if (!teams.Any()) return BadRequest("No teams found. Please create some teams first.");
+
+            var currentCollectors = await _unitOfWork.Collectors.GetAllAsync();
+            int currentCount = currentCollectors.Count();
+            int targetNew = 20;
+
+            var random = new Random();
+            for (int i = 0; i < targetNew; i++)
+            {
+                var email = $"collector_{Guid.NewGuid().ToString().Substring(0, 8)}@waste.com";
+                var team = teams[i % teams.Count];
+                
+                var request = new CreateCollectorRequestDto
+                {
+                    FullName = $"Collector {currentCount + i + 1}",
+                    Email = email,
+                    Password = "Password123",
+                    Phone = $"09{random.Next(10000000, 99999999)}",
+                    TeamId = team.TeamId,
+                    Role = CollectorRole.Member
+                };
+
+                await _teamService.CreateCollectorAsync(request);
+            }
+
+            // Ensure each team has a leader
+            foreach (var team in teams)
+            {
+                var teamCollectors = await _teamService.GetCollectorsByTeamIdAsync(team.TeamId);
+                if (!teamCollectors.Any(c => c.Role == "Leader"))
+                {
+                    var firstMember = teamCollectors.FirstOrDefault();
+                    if (firstMember != null)
+                    {
+                        await _teamService.SetLeaderAsync(team.TeamId, firstMember.CollectorId);
+                    }
+                }
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(null, $"Successfully seeded {targetNew} collectors and verified leaders."));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in FixDb");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
 }
+

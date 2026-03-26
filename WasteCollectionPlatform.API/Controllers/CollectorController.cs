@@ -32,6 +32,37 @@ public class CollectorController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized(ApiResponse<object>.ErrorResponse("Unauthorized."));
+            }
+
+            var collector = await _unitOfWork.Collectors.GetByUserIdAsync(userId);
+            if (collector == null)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("Collector profile not found."));
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(new {
+                collectorId = collector.CollectorId,
+                role = collector.Role,
+                teamId = collector.TeamId,
+                status = collector.Status
+            }, "Profile retrieved successfully."));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting profile");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
+
     /// <summary>
     /// Get tasks assigned to the current collector's team
     /// </summary>

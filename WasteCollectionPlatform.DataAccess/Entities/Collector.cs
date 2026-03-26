@@ -12,13 +12,13 @@ public partial class Collector
     public int UserId { get; set; }
 
     [Column("TeamId")]
-    public int TeamId { get; set; }
+    public int? TeamId { get; set; }
 
     public bool? Status { get; set; }
 
     public CollectorRole Role { get; set; } = CollectorRole.Member;
 
-    public virtual Team Team { get; set; } = null!;
+    public virtual Team? Team { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
 }

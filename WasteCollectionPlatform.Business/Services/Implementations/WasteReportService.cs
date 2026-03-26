@@ -23,6 +23,7 @@ public class WasteReportService : IWasteReportService
 	private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
     private readonly ILogger<WasteReportService> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ITeamService _teamService;
 
 
 	public WasteReportService(
@@ -37,7 +38,8 @@ public class WasteReportService : IWasteReportService
 		HttpClient httpClient,
 		Microsoft.AspNetCore.Hosting.IWebHostEnvironment env,
 		ILogger<WasteReportService> logger,
-		IUnitOfWork unitOfWork)
+		IUnitOfWork unitOfWork,
+		ITeamService teamService)
 
 	{
 		_wasteReportRepo = wasteReportRepo;
@@ -53,6 +55,7 @@ public class WasteReportService : IWasteReportService
 		_env = env;
 		_logger = logger;
 		_unitOfWork = unitOfWork;
+		_teamService = teamService;
 	}
 
 	public async Task<IEnumerable<WasteReport>> GetAllAsync()
@@ -159,6 +162,7 @@ public class WasteReportService : IWasteReportService
 			var image = new ReportImage
 			{
 				Imageurl = imageUrl,
+				ImageType = "Citizen",
 				Report = wasteReport
 			};
 			await _reportImageRepo.AddAsync(image);
@@ -569,8 +573,150 @@ public async Task<bool> DeleteAsync(int id)
 
         await _wasteReportRepo.UpdateAsync(report);
         await _wasteReportRepo.SaveChangesAsync();
-
         return report;
+    }
+
+    public async Task ApproveAndAssignToMainTeamAsync(int reportId)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(reportId);
+        if (report == null) throw new KeyNotFoundException("Report not found");
+
+        if (report.Status != ReportStatus.Pending)
+            throw new BusinessRuleException("Only Pending reports can be approved");
+
+        var mainTeam = await _teamRepo.GetTeamWithCollectorsAsync(report.AreaId, TeamType.Main);
+        if (mainTeam == null)
+            throw new BusinessRuleException("Khu vực này chưa được gán Đội Chính.");
+
+        var collectors = await _teamService.GetCollectorsByTeamIdAsync(mainTeam.TeamId);
+        var leader = collectors.FirstOrDefault(c => c.Role == "Leader");
+        if (leader == null)
+            throw new BusinessRuleException("Đội chính của khu vực này chưa có Trưởng nhóm.");
+
+        report.Status = ReportStatus.Assigned;
+        report.TeamId = mainTeam.TeamId;
+        
+        await _wasteReportRepo.UpdateAsync(report);
+        await _unitOfWork.SaveChangesAsync();
+
+        // Notify Leader
+        var area = await _areaRepo.GetByIdAsync(report.AreaId);
+        await _notificationService.SendNotificationAsync(
+            leader.UserId,
+            $"Nhiệm vụ mới: Thu gom rác tại khu vực {area?.Name}. Vui lòng xử lý vào thời gian sớm nhất.",
+            report.ReportId);
+    }
+
+    public async Task SubmitCompletionEvidenceAsync(int reportId, int leaderId, Microsoft.AspNetCore.Http.IFormFileCollection? imageFiles, List<string>? imageUrls, string? note)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(reportId);
+        if (report == null) throw new KeyNotFoundException("Report not found");
+
+        if (report.Status != ReportStatus.Assigned && report.Status != ReportStatus.OnTheWay)
+            throw new BusinessRuleException("Báo cáo không ở trạng thái có thể nộp bằng chứng.");
+
+        var leader = await _collectorRepo.GetByIdAsync(leaderId);
+        if (leader == null || leader.Role != CollectorRole.Leader || leader.TeamId != report.TeamId)
+            throw new BusinessRuleException("Chỉ trưởng nhóm được giao nhiệm vụ này mới có thể nộp bằng chứng.");
+
+        // Handle uploaded files
+        if (imageFiles != null)
+        {
+            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "completion");
+            Directory.CreateDirectory(uploadsDir);
+            foreach (var file in imageFiles)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                await _reportImageRepo.AddAsync(new ReportImage
+                {
+                    ReportId = reportId,
+                    Imageurl = $"/uploads/completion/{fileName}",
+                    ImageType = "Collector"
+                });
+            }
+        }
+
+        // Handle URL list
+        if (imageUrls != null)
+        {
+            foreach (var url in imageUrls)
+            {
+                await _reportImageRepo.AddAsync(new ReportImage
+                {
+                    ReportId = reportId,
+                    Imageurl = url,
+                    ImageType = "Collector"
+                });
+            }
+        }
+
+        report.Status = ReportStatus.ReportedByTeam;
+        
+        await _wasteReportRepo.UpdateAsync(report);
+        await _unitOfWork.SaveChangesAsync();
+
+        // Notify Admin
+        var team = await _teamRepo.GetByIdAsync(leader.TeamId!.Value);
+        await _notificationService.SendNotificationToRoleAsync(
+            UserRole.Admin,
+            $"Đội {team?.Name} đã báo cáo hoàn thành nhiệm vụ #{reportId}. Vui lòng kiểm tra và xác nhận.",
+            reportId);
+    }
+
+    public async Task VerifyAndFinalizeReportAsync(int reportId, bool isApproved, string? adminNote)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(reportId);
+        if (report == null) throw new KeyNotFoundException("Report not found");
+
+        if (report.Status != ReportStatus.ReportedByTeam)
+            throw new BusinessRuleException("Báo cáo không ở trạng thái chờ xác nhận.");
+
+        if (isApproved)
+        {
+            var citizen = await _citizenRepo.GetByIdAsync(report.CitizenId);
+            int points = 10;
+            var config = await _unitOfWork.SystemConfigurations.GetByKeyAsync("Points_CompletedReport");
+            if (config != null && int.TryParse(config.Value, out int parsed)) points = parsed;
+
+            report.Status = ReportStatus.Collected;
+            citizen.TotalPoints = (citizen.TotalPoints ?? 0) + points;
+
+            await _unitOfWork.PointHistories.AddAsync(new PointHistory
+            {
+                CitizenId = citizen.CitizenId,
+                ReportId = report.ReportId,
+                PointAmount = points,
+                CreatedAt = DateTime.Now
+            });
+
+            // Notify Citizen
+            await _notificationService.SendNotificationAsync(
+                citizen.UserId,
+                $"Tin vui! Báo cáo rác của bạn (#{report.ReportId}) đã được thu gom thành công. Bạn nhận được {points} điểm tích lũy.",
+                report.ReportId);
+        }
+        else
+        {
+            report.Status = ReportStatus.Assigned;
+            var team = await _teamRepo.GetByIdAsync(report.TeamId!.Value);
+            var collectors = await _teamService.GetCollectorsByTeamIdAsync(team.TeamId);
+            var leader = collectors.FirstOrDefault(c => c.Role == "Leader");
+            if (leader != null)
+            {
+                await _notificationService.SendNotificationAsync(
+                    leader.UserId,
+                    $"Báo cáo hoàn thành cho nhiệm vụ #{reportId} bị từ chối. Lý do: {adminNote}. Vui lòng xử lý lại.",
+                    reportId);
+            }
+        }
+
+        await _wasteReportRepo.UpdateAsync(report);
+        await _unitOfWork.SaveChangesAsync();
     }
 }
 

@@ -35,12 +35,10 @@ public class TeamRepository : GenericRepository<Team>, ITeamRepository
 
     public async Task<Team?> GetTeamWithCollectorsAsync(int areaId, TeamType teamType)
     {
-        _ = teamType;
-
         return await _context.Teams
             .Include(t => t.Collectors).ThenInclude(c => c.User)
             .Include(t => t.ReportAssignments)
-            .FirstOrDefaultAsync(t => t.AreaId == areaId);
+            .FirstOrDefaultAsync(t => t.AreaId == areaId && t.Type == teamType);
     }
     public async Task<bool> AnyAsync(Expression<Func<Team, bool>> predicate)
     {
