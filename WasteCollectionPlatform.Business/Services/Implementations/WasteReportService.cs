@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
+using System.Linq;
+using System.IO;
 using WasteCollectionPlatform.Business.Services.Interfaces;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
@@ -123,31 +126,29 @@ public class WasteReportService : IWasteReportService
 			throw new Exception("Area does not exist");
 		}
 
-		// Handle image: either from uploaded file or from URL
-		string? imageUrl = null;
-		if (dto.ImageFile != null && dto.ImageFile.Length > 0)
-		{
-			var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "reports");
-			Directory.CreateDirectory(uploadsDir);
-			var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.ImageFile.FileName)}";
-			var filePath = Path.Combine(uploadsDir, fileName);
-			using (var stream = new FileStream(filePath, FileMode.Create))
-			{
-				await dto.ImageFile.CopyToAsync(stream);
-			}
-			imageUrl = $"/uploads/reports/{fileName}";
-		}
-		else if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
+		// Handle fallback single image if Items is empty or for backward compatibility
+		string? imageUrl = await SaveReportImageAsync(dto.ImageFile);
+		if (string.IsNullOrEmpty(imageUrl) && !string.IsNullOrWhiteSpace(dto.ImageUrl))
 		{
 			imageUrl = dto.ImageUrl;
 		}
 
+		// Handle multiple items or single ones
+		string wasteType = dto.WasteType;
+		string description = dto.Description;
+		
+		if (dto.Items != null && dto.Items.Count > 0)
+		{
+			wasteType = string.Join(", ", dto.Items.Select(i => i.WasteType).Where(s => !string.IsNullOrWhiteSpace(s)));
+			description = string.Join("\n", dto.Items.Select(i => i.Description).Where(s => !string.IsNullOrWhiteSpace(s)));
+		}
+
 		var wasteReport = new WasteReport
 		{
-			Description = dto.Description,
+			Description = description,
 			CitizenId = citizen.CitizenId, // Use the correct CitizenId from DB
 			AreaId = dto.AreaId,
-			WasteType = dto.WasteType,
+			WasteType = wasteType,
 			CitizenLatitude = dto.Latitude,
 			CitizenLongitude = dto.Longitude,
 			CreatedAt = DateTime.UtcNow,
@@ -157,15 +158,36 @@ public class WasteReportService : IWasteReportService
 		};
 		await _wasteReportRepo.AddAsync(wasteReport);
 
+		// Handle many images from Items
+		if (dto.Items != null && dto.Items.Count > 0)
+		{
+			foreach (var item in dto.Items)
+			{
+				if (item.ImageFile != null && item.ImageFile.Length > 0)
+				{
+					string? itemImageUrl = await SaveReportImageAsync(item.ImageFile);
+					if (!string.IsNullOrEmpty(itemImageUrl))
+					{
+						wasteReport.ReportImages.Add(new ReportImage
+						{
+							Imageurl = itemImageUrl,
+							ImageType = "Citizen",
+							Report = wasteReport
+						});
+					}
+				}
+			}
+		}
+
+		// Handle legacy/fallback single image
 		if (!string.IsNullOrEmpty(imageUrl))
 		{
-			var image = new ReportImage
+			wasteReport.ReportImages.Add(new ReportImage
 			{
 				Imageurl = imageUrl,
 				ImageType = "Citizen",
 				Report = wasteReport
-			};
-			await _reportImageRepo.AddAsync(image);
+			});
 		}
 
 		await _wasteReportRepo.SaveChangesAsync();
@@ -184,6 +206,21 @@ public class WasteReportService : IWasteReportService
 		}
 
 		return wasteReport;
+	}
+
+	private async Task<string?> SaveReportImageAsync(IFormFile file)
+	{
+		if (file == null || file.Length == 0) return null;
+
+		var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "reports");
+		Directory.CreateDirectory(uploadsDir);
+		var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+		var filePath = Path.Combine(uploadsDir, fileName);
+		using (var stream = new FileStream(filePath, FileMode.Create))
+		{
+			await file.CopyToAsync(stream);
+		}
+		return $"/uploads/reports/{fileName}";
 	}
 
 	private async Task<string> SaveImageAsync(Microsoft.AspNetCore.Http.IFormFile file)
@@ -296,7 +333,7 @@ public class WasteReportService : IWasteReportService
 		{
 			await _notificationService.SendNotificationToTeamAsync(
 				selectedTeam.TeamId,
-				$"Báº¡n vá»«a Ä‘Æ°á»£c phĂ¢n cĂ´ng thu gom má»™t Ä‘Æ¡n bĂ¡o cĂ¡o rĂ¡c (MĂ£: #{report.ReportId})",
+				$"Bạn vừa được phân công thu gom một đơn báo cáo rác (Mã: #{report.ReportId})",
 				report.ReportId);
 		}
 		catch (Exception ex)
@@ -382,7 +419,8 @@ public class WasteReportService : IWasteReportService
 			var reportImage = new ReportImage
 			{
 				ReportId = report.ReportId,
-				Imageurl = collectorImageUrl
+				Imageurl = collectorImageUrl,
+				ImageType = "Collector"
 			};
 
 			await _reportImageRepo.AddAsync(reportImage);
@@ -491,7 +529,7 @@ public class WasteReportService : IWasteReportService
 		{
 			await _notificationService.SendNotificationToRoleAsync(
 				UserRole.Admin,
-				$"BĂ¡o cĂ¡o rĂ¡c (MĂ£: #{report.ReportId}) Ä‘ang Ä‘Æ°á»£c xá»­ lĂ­ bá»Ÿi nhĂ¢n viĂªn thu gom",
+				$"Báo cáo rác (Mã: #{report.ReportId}) đang được xử lý bởi nhân viên thu gom",
 				report.ReportId);
 
 			// Get the citizen's UserId to notify them
@@ -500,7 +538,7 @@ public class WasteReportService : IWasteReportService
 			{
 				await _notificationService.SendNotificationAsync(
 					citizen.UserId,
-					$"BĂ¡o cĂ¡o rĂ¡c cá»§a báº¡n (MĂ£: #{report.ReportId}) Ä‘ang Ä‘Æ°á»£c xá»­ lĂ­",
+					$"Báo cáo rác của bạn (Mã: #{report.ReportId}) đang được xử lý",
 					report.ReportId);
 			}
 		}

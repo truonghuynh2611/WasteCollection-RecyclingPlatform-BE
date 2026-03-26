@@ -75,8 +75,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString!);
 dataSourceBuilder.MapEnum<UserRole>("user_role", new NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<ReportStatus>("report_status", new NpgsqlNullNameTranslator());
-dataSourceBuilder.MapEnum<ReportStatus>("report_status", new NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<TeamType>("team_type", new NpgsqlNullNameTranslator());
+dataSourceBuilder.MapEnum<CollectorRole>("collector_role", new NpgsqlNullNameTranslator());
 
 var dataSource = dataSourceBuilder.Build();
 
@@ -227,6 +227,12 @@ using (var scope = app.Services.CreateScope())
     } catch (Exception ex) {
         // Ignored if column already exists
         Console.WriteLine($"PointHistories Migration note (safe to ignore): {ex.Message}");
+    }
+
+    try {
+        context.Database.ExecuteSqlRaw(@"ALTER TABLE ""ReportImages"" ADD COLUMN IF NOT EXISTS ""ImageType"" VARCHAR(50);");
+    } catch (Exception ex) {
+        Console.WriteLine($"ReportImages Migration note: {ex.Message}");
     }
 
     try {

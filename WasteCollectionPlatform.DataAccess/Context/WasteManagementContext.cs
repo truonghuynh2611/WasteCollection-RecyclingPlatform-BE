@@ -48,8 +48,9 @@ public partial class WasteManagementContext : DbContext
         modelBuilder
             .HasPostgresEnum("image_type", new[] { "Citizen", "Collector" })
             .HasPostgresEnum("point_transaction_type", new[] { "Earn", "Redeem" })
-            .HasPostgresEnum("report_status", new[] { "Pending", "Assigned", "Processing", "Completed", "Cancelled", "ReportedByTeam" })
+            .HasPostgresEnum("report_status", new[] { "Pending", "Accepted", "Assigned", "OnTheWay", "Collected", "Failed", "ReportedByTeam" })
             .HasPostgresEnum("team_type", new[] { "Main", "Support" })
+            .HasPostgresEnum("collector_role", new[] { "Member", "Leader" })
             .HasPostgresEnum<UserRole>("user_role");
 
         modelBuilder.Entity<Area>(entity =>

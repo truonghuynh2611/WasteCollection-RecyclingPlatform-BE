@@ -63,7 +63,6 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                     throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
                 }
             }
-
             var team = new Team
             {
                 AreaId = request.AreaId,
@@ -312,7 +311,6 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                     throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
                 }
             }
-
             team.AreaId = areaId;
             await _unitOfWork.Teams.UpdateAsync(team);
             await _unitOfWork.SaveChangesAsync();

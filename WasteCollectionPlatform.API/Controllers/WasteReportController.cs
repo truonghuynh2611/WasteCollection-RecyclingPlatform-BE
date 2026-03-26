@@ -61,19 +61,19 @@ public class WasteReportController : ControllerBase
 	}
 
 	[HttpGet("citizen/{citizenId}")]
-        public async Task<IActionResult> GetByCitizenId(int citizenId)
-        {
-                try
-                {
-                        var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
-                        return Ok(reports);
-                }
-                catch (Exception ex)
-                {
-                        _logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
-                        return StatusCode(500, ex.Message);
-                }
-        }
+	public async Task<IActionResult> GetByCitizenId(int citizenId)
+	{
+		try
+		{
+			var reports = await _wasteReportService.GetByCitizenIdAsync(citizenId);
+			return Ok(reports);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error retrieving waste reports for citizen {CitizenId}", citizenId);
+			return StatusCode(500, ex.Message);
+		}
+	}
 
         [HttpGet("{id}")]
 	public async Task<IActionResult> GetById(int id)
@@ -173,7 +173,6 @@ public class WasteReportController : ControllerBase
 			return BadRequest(ex.Message);
 		}
 	}
-
     [HttpPost("submit-completion")]
     public async Task<IActionResult> SubmitCompletion([FromForm] SubmitCompletionEvidenceDto dto)
     {
@@ -203,14 +202,13 @@ public class WasteReportController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
     [HttpPost("cancel-report")]
     public async Task<IActionResult> CancelReport([FromBody] CancelReportRequestDto request)
     {
         try
         {
-            // ? truy?n nguyên DTO
             await _wasteReportService.CancelReportAsync(request);
-
             return Ok(ApiResponse<object>.SuccessResponse(null, "Report cancelled successfully"));
         }
         catch (BusinessRuleException ex)
