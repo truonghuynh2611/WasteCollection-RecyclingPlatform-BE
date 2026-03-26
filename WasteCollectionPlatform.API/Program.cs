@@ -241,6 +241,9 @@ using (var scope = app.Services.CreateScope())
     } catch (Exception ex) {
         Console.WriteLine($"Users Migration note (safe to ignore): {ex.Message}");
     }
+    try {
+        context.Database.ExecuteSqlRaw(@"ALTER TABLE ""WasteReports"" ADD COLUMN IF NOT EXISTS ""CollectorNote"" TEXT;");
+    } catch { }
 }
 // Configure the HTTP request pipeline
 // Enable Swagger in all environments (for development/testing purposes)

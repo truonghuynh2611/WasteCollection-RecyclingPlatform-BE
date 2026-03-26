@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using WasteCollectionPlatform.Common.Enums;
 
@@ -32,9 +32,13 @@ public partial class WasteReport
 
     public int? TeamId { get; set; }
 
+    public string? CollectorNote { get; set; }
+
     public virtual Area Area { get; set; } = null!;
 
     public virtual Citizen Citizen { get; set; } = null!;
+
+    public virtual Team? Team { get; set; }
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
