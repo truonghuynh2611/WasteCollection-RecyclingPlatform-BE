@@ -133,13 +133,28 @@ public class DistrictController : ControllerBase
 
             var district = new District { DistrictName = request.DistrictName.Trim() };
             await _unitOfWork.Districts.AddAsync(district);
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(); // Get the ID
+
+            if (request.InitialAreaNames != null && request.InitialAreaNames.Any())
+            {
+                foreach (var areaName in request.InitialAreaNames.Where(n => !string.IsNullOrWhiteSpace(n)))
+                {
+                    var area = new Area
+                    {
+                        DistrictId = district.DistrictId,
+                        Name = areaName.Trim()
+                    };
+                    await _unitOfWork.Areas.AddAsync(area);
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
 
             return StatusCode(201, ApiResponse<object>.SuccessResponse(new
             {
                 district.DistrictId,
-                district.DistrictName
-            }, "Tạo quận thành công."));
+                district.DistrictName,
+                areasCreated = request.InitialAreaNames?.Count ?? 0
+            }, $"Tạo quận thành công {(request.InitialAreaNames?.Any() == true ? $"và {request.InitialAreaNames.Count} khu vực" : "")}."));
         }
         catch (Exception ex)
         {

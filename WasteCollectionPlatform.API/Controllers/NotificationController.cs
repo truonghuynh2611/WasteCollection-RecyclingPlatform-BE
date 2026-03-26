@@ -26,13 +26,52 @@ public class NotificationController : ControllerBase
         return Ok(notifications);
     }
 
-    [HttpPost("{id}/read")]
+    [HttpPut("{id}/read")]
     public async Task<IActionResult> MarkAsRead(int id)
     {
         var notification = await _context.Notifications.FindAsync(id);
         if (notification == null) return NotFound();
 
         notification.Isread = true;
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+
+    [HttpPut("user/{userId}/read-all")]
+    public async Task<IActionResult> MarkAllAsRead(int userId)
+    {
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == userId && n.Isread != true)
+            .ToListAsync();
+
+        foreach (var n in notifications)
+        {
+            n.Isread = true;
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteNotification(int id)
+    {
+        var notification = await _context.Notifications.FindAsync(id);
+        if (notification == null) return NotFound();
+
+        _context.Notifications.Remove(notification);
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+
+    [HttpDelete("user/{userId}")]
+    public async Task<IActionResult> DeleteAllNotifications(int userId)
+    {
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == userId)
+            .ToListAsync();
+
+        _context.Notifications.RemoveRange(notifications);
         await _context.SaveChangesAsync();
         return Ok();
     }

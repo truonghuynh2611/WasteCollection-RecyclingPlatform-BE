@@ -29,32 +29,5 @@ public class RegisterRequestDto
     
     [Required(ErrorMessage = "Role is required.")]
     public UserRole Role { get; set; }
-    
-    /// <summary>
-    /// Required for Collector role - Team ID
-    /// </summary>
-    public int? TeamId { get; set; }
-    
-    /// <summary>
-    /// Optional for Collector role - Vehicle information
-    /// </summary>
-    [StringLength(200, ErrorMessage = "Vehicle info must not exceed 200 characters.")]
-    public string? VehicleInfo { get; set; }
-    
-    /// <summary>
-    /// Optional for Enterprise role - District ID (service area)
-    /// </summary>
-    public int? DistrictId { get; set; }
-    
-    /// <summary>
-    /// Optional for Enterprise role - Waste types accepted (comma-separated)
-    /// </summary>
-    [StringLength(255, ErrorMessage = "Waste types must not exceed 255 characters.")]
-    public string? WasteTypes { get; set; }
-    
-    /// <summary>
-    /// Optional for Enterprise role - Daily capacity limit
-    /// </summary>
-    public int? DailyCapacity { get; set; }
 }
 

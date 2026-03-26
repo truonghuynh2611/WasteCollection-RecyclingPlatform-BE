@@ -94,14 +94,24 @@ public class AuthService : IAuthService
 
         _logger.LogInformation($"User {user.Email} logged in successfully");
         
-        // Get CitizenId and TotalPoints if user is a citizen
+        // Get IDs if applicable
         int? citizenId = null;
+        int? collectorId = null;
         int totalPoints = 0;
+        
+        string? collectorRole = null;
+        
         if (user.Role == UserRole.Citizen)
         {
             var citizen = await _unitOfWork.Citizens.GetByUserIdAsync(user.UserId);
             citizenId = citizen?.CitizenId;
             totalPoints = citizen?.TotalPoints ?? 0;
+        }
+        else if (user.Role == UserRole.Collector)
+        {
+            var collector = await _unitOfWork.Collectors.GetByUserIdAsync(user.UserId);
+            collectorId = collector?.CollectorId;
+            collectorRole = collector?.Role.ToString();
         }
 
         return new AuthResponseDto
@@ -114,6 +124,8 @@ public class AuthService : IAuthService
             Role = user.Role.ToString(),
             Status = user.Status ?? false,
             CitizenId = citizenId,
+            CollectorId = collectorId,
+            CollectorRole = collectorRole,
             TotalPoints = totalPoints,
             ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
         };
@@ -121,16 +133,16 @@ public class AuthService : IAuthService
     
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
     {
-        // 1. Check if email already exists in Users or PendingRegistrations
+        // 1. Enforce business rule: Public registration is only for Citizens
+        if (request.Role != UserRole.Citizen)
+        {
+            throw new BusinessRuleException(ErrorMessages.UnauthorizedAccess);
+        }
+
+        // 2. Check if email already exists in Users or PendingRegistrations
         if (await _unitOfWork.Users.EmailExistsAsync(request.Email))
         {
             throw new BusinessRuleException(ErrorMessages.EmailAlreadyExists);
-        }
-
-        // Validate TeamId for Collector
-        if (request.Role == UserRole.Collector && (!request.TeamId.HasValue || request.TeamId.Value <= 0))
-        {
-            throw new BusinessRuleException("TeamId is required for Collector registration.");
         }
 
         var existingPending = await _unitOfWork.PendingRegistrations.GetByEmailAsync(request.Email);
@@ -142,8 +154,7 @@ public class AuthService : IAuthService
             existingPending.Phone = request.Phone;
             existingPending.VerificationCode = new Random().Next(100000, 999999).ToString();
             existingPending.Expiry = DateTime.UtcNow.AddHours(2);
-            existingPending.Role = request.Role;
-            existingPending.TeamId = request.TeamId;
+            existingPending.Role = UserRole.Citizen;
             await _unitOfWork.PendingRegistrations.UpdateAsync(existingPending);
         }
         else
@@ -157,18 +168,17 @@ public class AuthService : IAuthService
                 Phone = request.Phone,
                 VerificationCode = new Random().Next(100000, 999999).ToString(),
                 Expiry = DateTime.UtcNow.AddHours(2),
-                Role = request.Role,
-                TeamId = request.TeamId
+                Role = UserRole.Citizen
             };
             await _unitOfWork.PendingRegistrations.AddAsync(pendingRecord);
         }
 
         await _unitOfWork.SaveChangesAsync();
         
-        // 2. Get the latest pending info to send email
+        // 3. Get the latest pending info to send email
         var latestPending = await _unitOfWork.PendingRegistrations.GetByEmailAsync(request.Email);
         
-        // 3. Send verification email (async)
+        // 4. Send verification email (async)
         _ = Task.Run(async () =>
         {
             try
@@ -277,12 +287,19 @@ public class AuthService : IAuthService
         await _unitOfWork.RefreshTokens.AddAsync(newRefreshTokenEntity);
         await _unitOfWork.SaveChangesAsync();
         
-        // Get CitizenId if user is a citizen
+        // Get IDs if applicable
         int? citizenId = null;
+        int? collectorId = null;
+        
         if (user.Role == UserRole.Citizen)
         {
             var citizen = await _unitOfWork.Citizens.GetByUserIdAsync(user.UserId);
             citizenId = citizen?.CitizenId;
+        }
+        else if (user.Role == UserRole.Collector)
+        {
+            var collector = await _unitOfWork.Collectors.GetByUserIdAsync(user.UserId);
+            collectorId = collector?.CollectorId;
         }
 
         return new AuthResponseDto
@@ -295,6 +312,7 @@ public class AuthService : IAuthService
             Role = user.Role.ToString(),
             Status = user.Status ?? false,
             CitizenId = citizenId,
+            CollectorId = collectorId,
             ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
         };
     }
@@ -334,7 +352,7 @@ public class AuthService : IAuthService
             await _unitOfWork.Users.AddAsync(user);
             await _unitOfWork.SaveChangesAsync(); // Get Userid
 
-            // Create Citizen or Collector profile
+            // Create Citizen profile (only Citizen allowed via public registration)
             if (user.Role == UserRole.Citizen)
             {
                 var citizen = new Citizen
@@ -343,20 +361,6 @@ public class AuthService : IAuthService
                     TotalPoints = 0
                 };
                 await _unitOfWork.Citizens.AddAsync(citizen);
-            }
-            else if (user.Role == UserRole.Collector)
-            {
-                if (!pending.TeamId.HasValue || pending.TeamId.Value <= 0)
-                {
-                    throw new BusinessRuleException("TeamId is required for Collector registration.");
-                }
-                var collector = new Collector
-                {
-                    UserId = user.UserId,
-                    TeamId = pending.TeamId.Value,
-                    Status = true
-                };
-                await _unitOfWork.Collectors.AddAsync(collector);
             }
 
             // 3. Generate tokens for auto-login
@@ -389,13 +393,21 @@ public class AuthService : IAuthService
             await _unitOfWork.SaveChangesAsync();
             await _unitOfWork.CommitTransactionAsync();
 
-            // Lấy lại citizen nếu cần trả về CitizenId
+            // Get IDs if applicable
             int? citizenId = null;
+            int? collectorId = null;
+            
             if (user.Role == UserRole.Citizen)
             {
                 var citizen = await _unitOfWork.Citizens.GetByUserIdAsync(user.UserId);
                 citizenId = citizen?.CitizenId;
             }
+            else if (user.Role == UserRole.Collector)
+            {
+                var collector = await _unitOfWork.Collectors.GetByUserIdAsync(user.UserId);
+                collectorId = collector?.CollectorId;
+            }
+
             return new AuthResponseDto
             {
                 Token = token,
@@ -406,6 +418,7 @@ public class AuthService : IAuthService
                 Role = user.Role.ToString(),
                 Status = true,
                 CitizenId = citizenId,
+                CollectorId = collectorId,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes)
             };
         }

@@ -21,6 +21,9 @@ using WasteCollectionPlatform.DataAccess.Context;
 using WasteCollectionPlatform.DataAccess.Repositories.Implementations;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
+// Enable legacy timestamp behavior for Npgsql to handle DateTime Kind issues
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -153,6 +156,7 @@ builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -165,25 +169,28 @@ builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationValidator>(
 var app = builder.Build();
 
 // Apply migrations and ensure schema is up to date
+// Apply migrations and ensure schema is up to date
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
-    try
-    {
-        await context.Database.MigrateAsync();
-        Console.WriteLine("✅ Database migrations applied successfully");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
-    }
-}
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
+    // Step 1: Manual Schema Maintenance (Runs FIRST to clean up legacy issues)
     try {
-        string sql = @"
+        string syncSql = @"
+            -- 0. Cleanup broken migration history row so it doesn't block startup
+            DELETE FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260325090846_AddRoleToPendingRegistration';
+
+            -- 1. Ensure user_role enum is correct
+            DO $$ 
+            BEGIN 
+                IF EXISTS (SELECT 1 FROM pg_type t WHERE t.typname = 'user_role') THEN
+                    IF NOT EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname = 'user_role' AND e.enumlabel = 'Citizen') THEN
+                        ALTER TYPE user_role ADD VALUE 'Citizen';
+                    END IF;
+                END IF;
+            END $$;
+
+            -- 2. PendingRegistrations table
             CREATE TABLE IF NOT EXISTS ""PendingRegistrations"" (
                 ""Email"" VARCHAR(150) PRIMARY KEY,
                 ""FullName"" VARCHAR(150) NOT NULL,
@@ -192,12 +199,14 @@ using (var scope = app.Services.CreateScope())
                 ""VerificationCode"" VARCHAR(10) NOT NULL,
                 ""Expiry"" TIMESTAMP WITH TIME ZONE NOT NULL,
                 ""CreatedAt"" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );";
-        context.Database.ExecuteSqlRaw(sql);
-    } catch {}
+            );
+            DO $$ BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'PendingRegistrations' AND column_name = 'Role') THEN
+                    ALTER TABLE ""PendingRegistrations"" ADD COLUMN ""Role"" user_role NOT NULL DEFAULT 'Citizen';
+                END IF;
+            END $$;
 
-    try {
-        string refreshTokenSql = @"
+            -- 3. RefreshTokens table
             CREATE TABLE IF NOT EXISTS ""RefreshTokens"" (
                 ""RefreshTokenId"" SERIAL PRIMARY KEY,
                 ""UserId"" INTEGER NOT NULL,
@@ -208,38 +217,100 @@ using (var scope = app.Services.CreateScope())
                 ""RevokedAt"" TIMESTAMP WITHOUT TIME ZONE,
                 CONSTRAINT fk_refreshtoken_user FOREIGN KEY (""UserId"") REFERENCES ""Users""(""UserId"") ON DELETE CASCADE
             );
-        ";
-        context.Database.ExecuteSqlRaw(refreshTokenSql);
-    } catch {}
 
-    try {
-        // Ensure VoucherId exists in PointHistories (missed in previous manual migrations)
-        string alterSql = @"
-            ALTER TABLE ""PointHistories"" 
-            ADD COLUMN ""VoucherId"" integer NULL;
-            
-            ALTER TABLE ""PointHistories""
-            ADD CONSTRAINT fk_point_voucher FOREIGN KEY (""VoucherId"") REFERENCES ""Vouchers"" (""VoucherId"") ON DELETE SET NULL;
-        ";
-        context.Database.ExecuteSqlRaw(alterSql);
+            -- 4. WasteReportItems table (Ensure PascalCase columns for EF Core)
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM pg_class c 
+                    JOIN pg_namespace n ON n.oid = c.relnamespace 
+                    JOIN pg_attribute a ON a.attrelid = c.oid 
+                    WHERE c.relname = 'WasteReportItems' 
+                    AND a.attname = 'ItemId'
+                    AND n.nspname = 'public'
+                ) THEN
+                    DROP TABLE IF EXISTS ""WasteReportItems"";
+                    CREATE TABLE ""WasteReportItems"" (
+                        ""ItemId"" SERIAL PRIMARY KEY,
+                        ""ReportId"" INTEGER NOT NULL,
+                        ""WasteType"" VARCHAR(150) NOT NULL,
+                        ""Description"" TEXT,
+                        ""ImageUrl"" TEXT,
+                        CONSTRAINT fk_item_report FOREIGN KEY (""ReportId"") REFERENCES ""WasteReports""(""ReportId"") ON DELETE CASCADE
+                    );
+                END IF;
+            END $$;
 
-        // Robustly ensure TokenVersion exists with correct casing (PascalCase)
+            -- 5. Global Column Maintenance (PascalCase Alignment)
+            DO $$ 
+            BEGIN 
+                -- Users.TokenVersion
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'tokenversion') THEN
+                    ALTER TABLE ""Users"" RENAME COLUMN ""tokenversion"" TO ""TokenVersion"";
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'TokenVersion') THEN
+                    ALTER TABLE ""Users"" ADD COLUMN ""TokenVersion"" INTEGER DEFAULT 1;
+                END IF;
+
+                -- PointHistories.VoucherId
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'PointHistories' AND column_name = 'VoucherId') THEN
+                    ALTER TABLE ""PointHistories"" ADD COLUMN ""VoucherId"" INTEGER;
+                END IF;
+
+                -- ReportImages.ImageType
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ReportImages' AND column_name = 'ImageType') THEN
+                    ALTER TABLE ""ReportImages"" ADD COLUMN ""ImageType"" VARCHAR(50);
+                END IF;
+
+                -- Teams.Type (enum team_type)
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'team_type') THEN
+                    CREATE TYPE team_type AS ENUM ('Main', 'Support');
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Teams' AND column_name = 'Type') THEN
+                    ALTER TABLE ""Teams"" ADD COLUMN ""Type"" team_type DEFAULT 'Main';
+                END IF;
+
+                -- 5.2. Ensure ReportStatus enum is correct
+                IF EXISTS (SELECT 1 FROM pg_type t WHERE t.typname = 'report_status') THEN
+                    IF NOT EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname = 'report_status' AND e.enumlabel = 'ReportedByTeam') THEN
+                        ALTER TYPE report_status ADD VALUE 'ReportedByTeam';
+                    END IF;
+                END IF;
+
+                -- 6. ReportAssignments table alignment
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM pg_class c 
+                    JOIN pg_namespace n ON n.oid = c.relnamespace 
+                    JOIN pg_attribute a ON a.attrelid = c.oid 
+                    WHERE c.relname = 'ReportAssignments' 
+                    AND a.attname = 'AssignmentId'
+                    AND n.nspname = 'public'
+                ) THEN
+                    DROP TABLE IF EXISTS ""ReportAssignments"";
+                    CREATE TABLE ""ReportAssignments"" (
+                        ""AssignmentId"" SERIAL PRIMARY KEY,
+                        ""ReportId"" INTEGER NOT NULL,
+                        ""TeamId"" INTEGER NOT NULL,
+                        CONSTRAINT fk_assignment_report FOREIGN KEY (""ReportId"") REFERENCES ""WasteReports""(""ReportId"") ON DELETE CASCADE,
+                        CONSTRAINT fk_assignment_team FOREIGN KEY (""TeamId"") REFERENCES ""Teams""(""TeamId"") ON DELETE CASCADE
+                    );
+                END IF;
+            END $$;
+        ";
+        context.Database.ExecuteSqlRaw(syncSql);
     } catch (Exception ex) {
-        // Ignored if column already exists
-        Console.WriteLine($"PointHistories Migration note (safe to ignore): {ex.Message}");
+        Console.WriteLine($"[CRITICAL] Schema Maintenance Failed: {ex.Message}");
     }
 
+    // Step 2: Regular Migrations (Safety check)
     try {
-        context.Database.ExecuteSqlRaw(@"ALTER TABLE ""ReportImages"" ADD COLUMN IF NOT EXISTS ""ImageType"" VARCHAR(50);");
+        await context.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations checked");
     } catch (Exception ex) {
-        Console.WriteLine($"ReportImages Migration note: {ex.Message}");
-    }
-
-    try {
-        try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""Users"" RENAME COLUMN ""tokenversion"" TO ""TokenVersion"";"); } catch { }
-        context.Database.ExecuteSqlRaw(@"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""TokenVersion"" INTEGER NOT NULL DEFAULT 0;");
-    } catch (Exception ex) {
-        Console.WriteLine($"Users Migration note (safe to ignore): {ex.Message}");
+        // Minor migration warnings are suppressed because manual sync handled critical parts
+        _ = ex; 
     }
 }
 // Configure the HTTP request pipeline

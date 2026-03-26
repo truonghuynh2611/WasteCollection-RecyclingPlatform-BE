@@ -1,33 +1,48 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using WasteCollectionPlatform.DataAccess.Context;
-using WasteCollectionPlatform.DataAccess.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
 
-var builder = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false);
+var builder = Host.CreateApplicationBuilder(args);
+var connectionString = "Host=localhost;Database=WasteManagement;Username=postgres;Password=postgres"; // Adjust if needed
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+var dataSource = dataSourceBuilder.Build();
 
-var configuration = builder.Build();
-var connectionString = configuration.GetConnectionString("DefaultConnection");
+var options = new DbContextOptionsBuilder<WasteManagementContext>()
+    .UseNpgsql(dataSource)
+    .Options;
 
-var services = new ServiceCollection();
-services.AddDbContext<WasteManagementContext>(options =>
-    options.UseNpgsql(connectionString));
+using var context = new WasteManagementContext(options);
 
-var serviceProvider = services.BuildServiceProvider();
+try {
+    Console.WriteLine("--- Checking PendingRegistrations Columns ---");
+    var pendingCols = context.Database.SqlQueryRaw<string>(@"
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'PendingRegistrations'
+    ").ToList();
+    foreach (var col in pendingCols) Console.WriteLine($"- {col}");
 
-using (var scope = serviceProvider.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<WasteManagementContext>();
-    var logs = await context.PointHistories
-        .OrderByDescending(p => p.CreatedAt)
-        .Take(5)
-        .ToListAsync();
+    Console.WriteLine("\n--- Checking WasteReports Columns ---");
+    var reportCols = context.Database.SqlQueryRaw<string>(@"
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'WasteReports'
+    ").ToList();
+    foreach (var col in reportCols) Console.WriteLine($"- {col}");
 
-    Console.WriteLine("LAST 5 POINT HISTORY RECORDS:");
-    foreach (var log in logs)
-    {
-        Console.WriteLine($"ID: {log.PointlogId}, ReportId: {log.ReportId}, Points: {log.PointAmount}, CreatedAt: {log.CreatedAt}");
-    }
+    Console.WriteLine("\n--- Checking WasteReportItems Table ---");
+    var hasItemsTable = context.Database.SqlQueryRaw<bool>(@"
+        SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_name = 'WasteReportItems'
+        )
+    ").ToList().FirstOrDefault();
+    Console.WriteLine($"WasteReportItems exists: {hasItemsTable}");
+
+} catch (Exception ex) {
+    Console.WriteLine($"Error: {ex.Message}");
 }

@@ -1,7 +1,8 @@
+using Microsoft.AspNetCore.Http;
+using WasteCollectionPlatform.Common.Enums;
+using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.Common.DTOs.Request.Admin;
 using WasteCollectionPlatform.Common.DTOs.Request.WasteReport;
-using WasteCollectionPlatform.DataAccess.Entities;
-using WasteCollectionPlatform.Common.Enums;
 
 namespace WasteCollectionPlatform.Business.Services.Interfaces;
 
@@ -16,13 +17,11 @@ public interface IWasteReportService
     Task CancelReportAsync(CancelReportRequestDto request);
     Task ProcessReportAsync(
 		int reportId,
-		int collectorId,
+		int userId,
 		bool isValid,
-		string? collectorImageUrl,
-		decimal? latitude,
-		decimal? longitude);
+		string? collectorImageUrl);
 	Task<bool> DeleteAsync(int id);
-    Task ConfirmReportAsync(int reportId, int collectorId);
+    Task ConfirmReportAsync(int reportId, int userId);
     Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto);
     Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
     

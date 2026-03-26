@@ -32,6 +32,10 @@ public class WasteReportController : ControllerBase
 		{
 			if (!ModelState.IsValid)
 			{
+				var errors = string.Join(" | ", ModelState.Values
+					.SelectMany(v => v.Errors)
+					.Select(e => e.ErrorMessage));
+				_logger.LogWarning("Validation failed for CreateReport: {Errors}", errors);
 				return BadRequest(ModelState);
 			}
 
@@ -40,7 +44,7 @@ public class WasteReportController : ControllerBase
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Error creating waste report");
+			_logger.LogError(ex, "Error creating waste report. Message: {Message}", ex.Message);
 			return BadRequest(ex.Message);
 		}
 	}
@@ -75,6 +79,21 @@ public class WasteReportController : ControllerBase
 		}
 	}
 
+	[HttpGet("collector/{collectorId}")]
+	public async Task<IActionResult> GetByCollectorId(int collectorId)
+	{
+		try
+		{
+			var reports = await _wasteReportService.GetByCollectorIdAsync(collectorId);
+			return Ok(reports);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error retrieving waste reports for collector {CollectorId}", collectorId);
+			return StatusCode(500, ex.Message);
+		}
+	}
+
         [HttpGet("{id}")]
 	public async Task<IActionResult> GetById(int id)
 	{
@@ -101,13 +120,18 @@ public class WasteReportController : ControllerBase
 	{
 		try
 		{
+            var userIdStr = User.FindFirst("UserId")?.Value 
+                         ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                         ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized("User identity not found in token");
+            int userId = int.Parse(userIdStr);
+
 			await _wasteReportService.ProcessReportAsync(
 				dto.ReportId,
-				dto.CollectorId,
+				userId,
 				dto.IsValid,
-				dto.CollectorImageUrl,
-				dto.Latitude,
-				dto.Longitude);
+				dto.CollectorImageUrl);
 
 			return Ok("Report processed successfully");
 		}
@@ -119,11 +143,28 @@ public class WasteReportController : ControllerBase
 	}
 
 	[HttpPost("confirm/{id}")]
-	public async Task<IActionResult> Confirm(int id, [FromQuery] int collectorId)
+	public async Task<IActionResult> Confirm(int id)
 	{
 		try
 		{
-			await _wasteReportService.ConfirmReportAsync(id, collectorId);
+            // Use more robust claim retrieval
+            var userIdStr = User.FindFirst("UserId")?.Value 
+                         ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                         ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(userIdStr)) 
+            {
+                _logger.LogWarning("Confirm/id: UserId claim not found in token for user {User}", User.Identity?.Name);
+                return Unauthorized("User identity not found in token");
+            }
+            
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                 _logger.LogWarning("Confirm/id: Invalid UserId claim format: {val}", userIdStr);
+                 return BadRequest("Invalid user identity in token");
+            }
+
+			await _wasteReportService.ConfirmReportAsync(id, userId);
 			return Ok("Report confirmed and is now being processed");
 		}
 		catch (Exception ex)

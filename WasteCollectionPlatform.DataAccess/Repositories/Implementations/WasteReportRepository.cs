@@ -20,7 +20,9 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Where(r => r.CitizenId == citizenId)
             .Include(r => r.PointHistories)
             .Include(r => r.ReportImages)
+            .Include(r => r.WasteReportItems)
             .Include(r => r.Area)
+                .ThenInclude(a => a.District)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
     }
@@ -42,7 +44,10 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
             .Where(r => r.TeamId == collector.TeamId || r.ReportAssignments.Any(ra => ra.TeamId == collector.TeamId))
             .Include(r => r.Citizen)
             .Include(r => r.ReportImages)
+            .Include(r => r.WasteReportItems)
             .Include(r => r.PointHistories)
+            .Include(r => r.Area)
+                .ThenInclude(a => a.District)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
     }
@@ -52,7 +57,9 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         return await _context.WasteReports
             .Include(w => w.Citizen)
             .Include(w => w.Area)
+                .ThenInclude(a => a.District)
             .Include(w => w.PointHistories)
+            .Include(w => w.WasteReportItems)
             .ToListAsync();
     }
 
@@ -61,7 +68,9 @@ public class WasteReportRepository : GenericRepository<WasteReport>, IWasteRepor
         return await _context.WasteReports
             .Include(w => w.Citizen)
             .Include(w => w.Area)
+                .ThenInclude(a => a.District)
             .Include(w => w.PointHistories)
+            .Include(w => w.WasteReportItems)
             .FirstOrDefaultAsync(w => w.ReportId == id);
     }
 

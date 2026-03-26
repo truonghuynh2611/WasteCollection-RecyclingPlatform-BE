@@ -27,6 +27,7 @@ namespace WasteCollectionPlatform.Business.Services.Interfaces
         Task RemoveLeaderAsync(int teamId, int collectorId);
         Task<List<CollectorDto>> GetAllCollectorsAsync();
         Task AssignTeamToAreaAsync(int teamId, int areaId);
+        Task AssignReportToTeamAsync(AssignReportRequestDto request);
     }
 }
 

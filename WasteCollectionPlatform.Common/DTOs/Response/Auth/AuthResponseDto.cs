@@ -23,6 +23,10 @@ public class AuthResponseDto
     
     public int? CitizenId { get; set; }
     
+    public int? CollectorId { get; set; }
+    
+    public string? CollectorRole { get; set; }
+    
     public int TotalPoints { get; set; }
     
     public DateTime ExpiresAt { get; set; }

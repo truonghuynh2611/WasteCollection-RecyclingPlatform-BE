@@ -32,13 +32,6 @@ public class UserRegistrationValidator : AbstractValidator<RegisterRequestDto>
             .MaximumLength(20).WithMessage("Phone number must not exceed 20 characters.");
         
         RuleFor(x => x.Role)
-            .IsInEnum().WithMessage(ErrorMessages.InvalidRole);
-        
-        // Collector-specific validation (PostgreSQL schema uses Team-based structure)
-        When(x => x.Role == UserRole.Collector, () =>
-        {
-            RuleFor(x => x.TeamId)
-                .NotEmpty().WithMessage("Team ID is required for Collector registration.");
-        });
+            .Must(r => r == UserRole.Citizen).WithMessage("Public registration is only allowed for Citizens.");
     }
 }

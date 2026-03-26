@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WasteCollectionPlatform.Common.Enums;
@@ -12,9 +13,11 @@ using WasteCollectionPlatform.DataAccess.Context;
 namespace WasteCollectionPlatform.DataAccess.Migrations
 {
     [DbContext(typeof(WasteManagementContext))]
-    partial class WasteManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20260326145414_RemoveCoordinatesAndAddReportItems_V3")]
+    partial class RemoveCoordinatesAndAddReportItems_V3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,7 +229,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
 
                     b.HasKey("Email");
 
-                    b.ToTable("PendingRegistrations", (string)null);
+                    b.ToTable("PendingRegistrations");
                 });
 
             modelBuilder.Entity("WasteCollectionPlatform.DataAccess.Entities.PointHistory", b =>
@@ -399,7 +402,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("SystemConfigurations", (string)null);
+                    b.ToTable("SystemConfigurations");
 
                     b.HasData(
                         new

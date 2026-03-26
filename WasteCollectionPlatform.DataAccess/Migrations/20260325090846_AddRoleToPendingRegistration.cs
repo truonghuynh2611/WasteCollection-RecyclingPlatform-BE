@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WasteCollectionPlatform.Common.Enums;
@@ -13,6 +13,7 @@ namespace WasteCollectionPlatform.DataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("CREATE TABLE IF NOT EXISTS \"Admins\" ( \"AdminId\" serial PRIMARY KEY );");
             migrationBuilder.DropTable(
                 name: "Admins");
 

@@ -320,6 +320,81 @@ public class TeamController : ControllerBase
         }
     }
 
+    [HttpPost("assign-report")]
+    public async Task<IActionResult> AssignReportToTeam([FromBody] AssignReportRequestDto request)
+    {
+        try
+        {
+            await _teamService.AssignReportToTeamAsync(request);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Đã gán báo cáo cho đội thành công"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning report {ReportId} to team {TeamId}", request.ReportId, request.TeamId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// Sync: Create Collector records for all Users with Role=Collector who don't have one yet
+    /// </summary>
+    [HttpPost("sync-collectors")]
+    public async Task<IActionResult> SyncCollectors()
+    {
+        try
+        {
+            // Get all users with Collector role
+            var allUsers = await _unitOfWork.Users.GetAllAsync();
+            var collectorUsers = allUsers.Where(u => u.Role == UserRole.Collector).ToList();
+
+            // Get all existing collectors
+            var existingCollectors = await _unitOfWork.Collectors.GetAllAsync();
+            var existingUserIds = existingCollectors.Select(c => c.UserId).ToHashSet();
+
+            int synced = 0;
+            foreach (var user in collectorUsers)
+            {
+                if (!existingUserIds.Contains(user.UserId))
+                {
+                    var collector = new WasteCollectionPlatform.DataAccess.Entities.Collector
+                    {
+                        UserId = user.UserId,
+                        TeamId = null,
+                        Role = CollectorRole.Member,
+                        Status = user.Status ?? true
+                    };
+                    await _unitOfWork.Collectors.AddAsync(collector);
+                    synced++;
+                }
+            }
+
+            if (synced > 0)
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(new
+            {
+                totalCollectorUsers = collectorUsers.Count,
+                alreadySynced = existingUserIds.Count,
+                newlySynced = synced
+            }, $"Đồng bộ thành công: {synced} Collector mới được tạo."));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error syncing collectors");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
     [HttpPost("fix-db")]
     public async Task<IActionResult> FixDb()
     {

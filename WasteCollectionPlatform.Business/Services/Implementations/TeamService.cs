@@ -315,5 +315,36 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
             await _unitOfWork.Teams.UpdateAsync(team);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task AssignReportToTeamAsync(AssignReportRequestDto request)
+        {
+            var report = await _unitOfWork.WasteReports.GetByIdAsync(request.ReportId);
+            if (report == null)
+                throw new KeyNotFoundException($"Báo cáo {request.ReportId} không tồn tại.");
+
+            var team = await _unitOfWork.Teams.GetByIdAsync(request.TeamId);
+            if (team == null)
+                throw new KeyNotFoundException($"Đội {request.TeamId} không tồn tại.");
+
+            if (team.CurrentTaskCount >= 5)
+                throw new BusinessRuleException($"Đội {team.Name} đã đạt giới hạn tối đa 5 báo cáo đang xử lý.");
+
+            report.TeamId = request.TeamId;
+            report.Status = ReportStatus.Assigned;
+            team.CurrentTaskCount += 1;
+
+            await _unitOfWork.WasteReports.UpdateAsync(report);
+            await _unitOfWork.Teams.UpdateAsync(team);
+
+            // Thêm bản ghi phân công vào bảng junction / lịch sử
+            var assignment = new ReportAssignment
+            {
+                ReportId = request.ReportId,
+                TeamId = request.TeamId
+            };
+            await _unitOfWork.ReportAssignments.AddAsync(assignment);
+
+            await _unitOfWork.SaveChangesAsync();
+        }
     }
 }

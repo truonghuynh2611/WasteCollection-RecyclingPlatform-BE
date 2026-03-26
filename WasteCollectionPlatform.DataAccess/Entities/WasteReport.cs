@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using WasteCollectionPlatform.Common.Enums;
 
@@ -15,14 +15,6 @@ public partial class WasteReport
     public string? Description { get; set; }
 
     public string? WasteType { get; set; }
-
-    public decimal? CitizenLatitude { get; set; }
-
-    public decimal? CitizenLongitude { get; set; }
-
-    public decimal? CollectorLatitude { get; set; }
-
-    public decimal? CollectorLongitude { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -43,4 +35,6 @@ public partial class WasteReport
     public virtual ICollection<ReportAssignment> ReportAssignments { get; set; } = new List<ReportAssignment>();
 
     public virtual ICollection<ReportImage> ReportImages { get; set; } = new List<ReportImage>();
+
+    public virtual ICollection<WasteReportItem> WasteReportItems { get; set; } = new List<WasteReportItem>();
 }

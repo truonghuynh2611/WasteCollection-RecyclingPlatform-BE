@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using WasteCollectionPlatform.DataAccess.Context;
+using WasteCollectionPlatform.DataAccess.Entities;
 using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
 namespace WasteCollectionPlatform.DataAccess.Repositories.Implementations;
@@ -68,6 +69,10 @@ public class UnitOfWork : IUnitOfWork
 
     public ISystemConfigurationRepository SystemConfigurations =>
         _systemConfigurations ??= new SystemConfigurationRepository(_context);
+    
+    private IGenericRepository<ReportAssignment>? _reportAssignments;
+    public IGenericRepository<ReportAssignment> ReportAssignments => 
+        _reportAssignments ??= new GenericRepository<ReportAssignment>(_context);
 
     public async Task<int> SaveChangesAsync()
     {

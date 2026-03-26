@@ -36,6 +36,7 @@ public partial class WasteManagementContext : DbContext
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
     public virtual DbSet<WasteReport> WasteReports { get; set; }
+    public virtual DbSet<WasteReportItem> WasteReportItems { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
     public virtual DbSet<PendingRegistration> PendingRegistrations { get; set; }
@@ -46,11 +47,9 @@ public partial class WasteManagementContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
-            .HasPostgresEnum("image_type", new[] { "Citizen", "Collector" })
-            .HasPostgresEnum("point_transaction_type", new[] { "Earn", "Redeem" })
-            .HasPostgresEnum("report_status", new[] { "Pending", "Accepted", "Assigned", "OnTheWay", "Collected", "Failed", "ReportedByTeam" })
-            .HasPostgresEnum("team_type", new[] { "Main", "Support" })
-            .HasPostgresEnum("collector_role", new[] { "Member", "Leader" })
+            .HasPostgresEnum<ReportStatus>("report_status")
+            .HasPostgresEnum<TeamType>("team_type")
+            .HasPostgresEnum<CollectorRole>("collector_role")
             .HasPostgresEnum<UserRole>("user_role");
 
         modelBuilder.Entity<Area>(entity =>
@@ -102,7 +101,7 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.CollectorId).HasColumnName("CollectorId");
             entity.Property(e => e.Role)
                 .HasColumnName("Role")
-                .HasConversion<int>()
+                .HasColumnType("collector_role")
                 .HasDefaultValue(CollectorRole.Member);
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
@@ -242,7 +241,7 @@ public partial class WasteManagementContext : DbContext
 
             entity.Property(e => e.Type)
                 .HasColumnName("Type")
-                .HasConversion<int>()
+                .HasColumnType("team_type")
                 .HasDefaultValue(TeamType.Main);
 
             entity.HasOne(d => d.Area).WithMany(p => p.Teams)
@@ -274,7 +273,8 @@ public partial class WasteManagementContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("Phone");
             entity.Property(e => e.Role)
-                .HasColumnName("Role");
+                .HasColumnName("Role")
+                .HasColumnType("user_role");
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
                 .HasColumnName("Status");
@@ -325,18 +325,6 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.ReportId).HasColumnName("ReportId");
             entity.Property(e => e.AreaId).HasColumnName("AreaId");
             entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
-            entity.Property(e => e.CitizenLatitude)
-                .HasPrecision(10, 8)
-                .HasColumnName("CitizenLatitude");
-            entity.Property(e => e.CitizenLongitude)
-                .HasPrecision(11, 8)
-                .HasColumnName("CitizenLongitude");
-            entity.Property(e => e.CollectorLatitude)
-                .HasPrecision(10, 8)
-                .HasColumnName("CollectorLatitude");
-            entity.Property(e => e.CollectorLongitude)
-                .HasPrecision(11, 8)
-                .HasColumnName("CollectorLongitude");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp with time zone")
@@ -346,8 +334,8 @@ public partial class WasteManagementContext : DbContext
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("ExpireTime");
             entity.Property(e => e.Status)
-                .HasConversion<int>()
-                .HasColumnName("Status");
+                .HasColumnName("Status")
+                .HasColumnType("report_status");
             entity.Property(e => e.TeamId)
                 .HasColumnName("TeamId");
             entity.Property(e => e.WasteType)
@@ -363,6 +351,24 @@ public partial class WasteManagementContext : DbContext
                 .HasConstraintName("fk_report_citizen");
         });
 
+        modelBuilder.Entity<WasteReportItem>(entity =>
+        {
+            entity.HasKey(e => e.ItemId).HasName("wastereportitem_pkey");
+
+            entity.ToTable("WasteReportItems");
+
+            entity.Property(e => e.ItemId).HasColumnName("ItemId");
+            entity.Property(e => e.ReportId).HasColumnName("ReportId");
+            entity.Property(e => e.WasteType).HasMaxLength(150).HasColumnName("WasteType");
+            entity.Property(e => e.Description).HasColumnName("Description");
+            entity.Property(e => e.ImageUrl).HasColumnName("ImageUrl");
+
+            entity.HasOne(d => d.Report).WithMany(p => p.WasteReportItems)
+                .HasForeignKey(d => d.ReportId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_item_report");
+        });
+
 
         modelBuilder.Entity<SystemConfiguration>().HasData(
             new SystemConfiguration { Key = "Points_CompletedReport", Value = "10", Description = "Number of points earned by citizen when a waste report is successfully completed." },
@@ -372,6 +378,24 @@ public partial class WasteManagementContext : DbContext
         // RefreshToken configuration
         modelBuilder.ApplyConfiguration(new Configurations.RefreshTokenConfiguration());
 
+
+        modelBuilder.Entity<PendingRegistration>(entity =>
+        {
+            entity.HasKey(e => e.Email).HasName("pendingregistration_pkey");
+            entity.ToTable("PendingRegistrations");
+
+            entity.Property(e => e.Email).HasMaxLength(150);
+            entity.Property(e => e.FullName).HasMaxLength(150);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.VerificationCode).HasMaxLength(10);
+            entity.Property(e => e.Role)
+                .HasColumnName("Role")
+                .HasColumnType("user_role")
+                .HasDefaultValue(UserRole.Citizen);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp with time zone");
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }
