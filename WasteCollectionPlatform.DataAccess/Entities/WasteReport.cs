@@ -16,14 +16,6 @@ public partial class WasteReport
 
     public string? WasteType { get; set; }
 
-    public decimal? CitizenLatitude { get; set; }
-
-    public decimal? CitizenLongitude { get; set; }
-
-    public decimal? CollectorLatitude { get; set; }
-
-    public decimal? CollectorLongitude { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? ExpireTime { get; set; }

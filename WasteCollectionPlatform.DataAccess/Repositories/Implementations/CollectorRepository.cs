@@ -27,4 +27,10 @@ public class CollectorRepository : GenericRepository<Collector>, ICollectorRepos
             .Include(c => c.Team)
             .FirstOrDefaultAsync(c => c.CollectorId == collectorId);
     }
+    public async Task<IEnumerable<Collector>> GetAllWithUsersAsync()
+    {
+        return await _dbSet
+            .Include(c => c.User)
+            .ToListAsync();
+    }
 }

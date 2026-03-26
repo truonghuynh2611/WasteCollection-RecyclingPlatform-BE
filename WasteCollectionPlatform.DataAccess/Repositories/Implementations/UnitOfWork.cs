@@ -26,6 +26,7 @@ public class UnitOfWork : IUnitOfWork
     private IAreaRepository? _areas;
     private ISystemConfigurationRepository? _systemConfigurations;
     private IWasteReportItemRepository? _wasteReportItems;
+    private IReportImageRepository? _reportImages;
     private IReportAssignmentRepository? _reportAssignments;
 
     public UnitOfWork(WasteManagementContext context)
@@ -72,6 +73,9 @@ public class UnitOfWork : IUnitOfWork
 
     public IWasteReportItemRepository WasteReportItems =>
         _wasteReportItems ??= new WasteReportItemRepository(_context);
+
+    public IReportImageRepository ReportImages =>
+        _reportImages ??= new ReportImageRepository(_context);
 
     public IReportAssignmentRepository ReportAssignments =>
         _reportAssignments ??= new ReportAssignmentRepository(_context);

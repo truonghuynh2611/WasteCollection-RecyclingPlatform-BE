@@ -23,6 +23,10 @@ using WasteCollectionPlatform.DataAccess.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Set default culture to Invariant to ensure consistent decimal parsing
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+
 // Add services to the container
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -81,7 +85,9 @@ dataSourceBuilder.MapEnum<TeamType>("team_type", new NpgsqlNullNameTranslator())
 var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<WasteManagementContext>(options =>
-    options.UseNpgsql(dataSource));
+    options.UseNpgsql(dataSource)
+           .EnableSensitiveDataLogging()
+           .EnableDetailedErrors());
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

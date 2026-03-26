@@ -9,4 +9,5 @@ public interface ICollectorRepository : IGenericRepository<Collector>
 {
     Task<Collector?> GetByUserIdAsync(int userId);
     Task<Collector?> GetByIdWithDetailsAsync(int collectorId);
+    Task<IEnumerable<Collector>> GetAllWithUsersAsync();
 }

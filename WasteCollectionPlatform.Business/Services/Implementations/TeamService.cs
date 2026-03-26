@@ -23,7 +23,7 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
         {
             var teams = await _unitOfWork.Teams.GetAllAsync();
             var areas = await _unitOfWork.Areas.GetAllAsync();
-            var collectors = await _unitOfWork.Collectors.GetAllAsync();
+            var collectors = await _unitOfWork.Collectors.GetAllWithUsersAsync();
 
             return teams.Select(t => new
             {
@@ -32,6 +32,12 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                 areaId = t.AreaId,
                 areaName = areas.FirstOrDefault(a => a.AreaId == t.AreaId)?.Name,
                 collectorCount = collectors.Count(c => c.TeamId == t.TeamId),
+                collectors = collectors.Where(c => c.TeamId == t.TeamId)
+                                      .Select(c => new { 
+                                          c.CollectorId, 
+                                          fullName = c.User?.FullName, 
+                                          role = (int)c.Role 
+                                      }),
                 currentTaskCount = t.CurrentTaskCount
             });
         }

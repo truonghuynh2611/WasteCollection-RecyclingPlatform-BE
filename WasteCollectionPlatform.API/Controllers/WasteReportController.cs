@@ -106,9 +106,7 @@ public class WasteReportController : ControllerBase
 				dto.ReportId,
 				dto.CollectorId,
 				dto.IsValid,
-				dto.CollectorImageUrl,
-				dto.Latitude,
-				dto.Longitude);
+				dto.CollectorImageUrl);
 
 			return Ok("Report processed successfully");
 		}

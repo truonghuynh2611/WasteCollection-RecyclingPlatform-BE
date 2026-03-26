@@ -323,18 +323,6 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.ReportId).HasColumnName("ReportId");
             entity.Property(e => e.AreaId).HasColumnName("AreaId");
             entity.Property(e => e.CitizenId).HasColumnName("CitizenId");
-            entity.Property(e => e.CitizenLatitude)
-                .HasPrecision(10, 8)
-                .HasColumnName("CitizenLatitude");
-            entity.Property(e => e.CitizenLongitude)
-                .HasPrecision(11, 8)
-                .HasColumnName("CitizenLongitude");
-            entity.Property(e => e.CollectorLatitude)
-                .HasPrecision(10, 8)
-                .HasColumnName("CollectorLatitude");
-            entity.Property(e => e.CollectorLongitude)
-                .HasPrecision(11, 8)
-                .HasColumnName("CollectorLongitude");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp with time zone")

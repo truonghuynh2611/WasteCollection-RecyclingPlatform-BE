@@ -18,9 +18,7 @@ public interface IWasteReportService
 		int reportId,
 		int collectorId,
 		bool isValid,
-		string? collectorImageUrl,
-		decimal? latitude,
-		decimal? longitude);
+		string? collectorImageUrl);
     Task ConfirmReportAsync(int reportId, int collectorId);
     Task UpdateReportStatusAsync(int reportId, ReportStatus newStatus);
     Task<WasteReport> UpdateAsync(int id, UpdateWasteReportDto dto);
