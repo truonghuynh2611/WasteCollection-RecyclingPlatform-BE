@@ -243,7 +243,7 @@ public partial class WasteManagementContext : DbContext
             entity.Property(e => e.Type)
                 .HasColumnName("Type")
                 .HasConversion<int>()
-                .HasDefaultValue(TeamType.Main);
+                .HasDefaultValue(TeamType.Unassigned);
 
             entity.HasOne(d => d.Area).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.AreaId)
@@ -350,6 +350,8 @@ public partial class WasteManagementContext : DbContext
                 .HasColumnName("Status");
             entity.Property(e => e.TeamId)
                 .HasColumnName("TeamId");
+            entity.Property(e => e.CollectorNote)
+                .HasColumnName("CollectorNote");
             entity.Property(e => e.WasteType)
                 .HasMaxLength(100)
                 .HasColumnName("WasteType");
@@ -361,6 +363,10 @@ public partial class WasteManagementContext : DbContext
             entity.HasOne(d => d.Citizen).WithMany(p => p.WasteReports)
                 .HasForeignKey(d => d.CitizenId)
                 .HasConstraintName("fk_report_citizen");
+
+            entity.HasOne(d => d.Team).WithMany()
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("fk_report_team");
         });
 
 

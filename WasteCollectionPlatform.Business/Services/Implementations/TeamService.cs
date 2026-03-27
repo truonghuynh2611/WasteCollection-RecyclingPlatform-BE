@@ -35,40 +35,59 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                 throw new BusinessRuleException("Tên team không được để trống");
             }
 
-            var area = await _unitOfWork.Areas.GetByIdAsync(request.AreaId);
-            if (area == null)
-            {
-                throw new BusinessRuleException("Area không tồn tại");
-            }
+            TeamType type = request.Type ?? TeamType.Unassigned;
+            int? areaId = request.AreaId;
 
-            var exists = await _unitOfWork.Teams.ExistsAsync(t => t.AreaId == request.AreaId && t.Name == request.Name);
-            if (exists)
+            if (areaId.HasValue)
             {
-                throw new BusinessRuleException("Team đã tồn tại trong Area này");
-            }
-
-            // Kiểm tra giới hạn: 1 Đội chính và 1 Đội hỗ trợ mỗi khu vực
-            var areaTeams = await _unitOfWork.Teams.GetByAreaIdAsync(request.AreaId);
-            if (request.Type == TeamType.Main)
-            {
-                if (areaTeams.Any(t => t.Type == TeamType.Main))
+                var area = await _unitOfWork.Areas.GetByIdAsync(areaId.Value);
+                if (area == null)
                 {
-                    throw new BusinessRuleException("Khu vực này đã có đội chính.");
+                    throw new BusinessRuleException("Area không tồn tại");
+                }
+
+                var existsInArea = await _unitOfWork.Teams.ExistsAsync(t => t.AreaId == areaId && t.Name == request.Name);
+                if (existsInArea)
+                {
+                    throw new BusinessRuleException("Team đã tồn tại trong Area này");
+                }
+
+                // Kiểm tra giới hạn: 1 Đội chính và 1 Đội hỗ trợ mỗi khu vực
+                if (type != TeamType.Unassigned)
+                {
+                    var areaTeams = await _unitOfWork.Teams.GetByAreaIdAsync(areaId.Value);
+                    if (type == TeamType.Main)
+                    {
+                        if (areaTeams.Any(t => t.Type == TeamType.Main))
+                        {
+                            throw new BusinessRuleException("Khu vực này đã có đội chính.");
+                        }
+                    }
+                    else if (type == TeamType.Support)
+                    {
+                        if (areaTeams.Any(t => t.Type == TeamType.Support))
+                        {
+                            throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
+                        }
+                    }
                 }
             }
-            else if (request.Type == TeamType.Support)
+            else
             {
-                if (areaTeams.Any(t => t.Type == TeamType.Support))
+                // Global check for unassigned teams with the same name if needed
+                var globalExists = await _unitOfWork.Teams.ExistsAsync(t => t.AreaId == null && t.Name == request.Name);
+                if (globalExists)
                 {
-                    throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
+                    throw new BusinessRuleException("Team chưa gán này đã tồn tại.");
                 }
             }
+
             var team = new Team
             {
-                AreaId = request.AreaId,
+                AreaId = areaId,
                 Name = request.Name.Trim(),
                 CurrentTaskCount = 0,
-                Type = request.Type
+                Type = type
             };
 
             await _unitOfWork.Teams.AddAsync(team);
@@ -79,6 +98,7 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
                 team.TeamId,
                 team.Name,
                 team.AreaId,
+                team.Type,
                 team.CurrentTaskCount
             };
         }
@@ -104,19 +124,22 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
             team.AreaId = request.AreaId;
             if (request.Type.HasValue)
             {
-                var areaTeams = await _unitOfWork.Teams.GetByAreaIdAsync(team.AreaId.Value);
-                if (request.Type.Value == TeamType.Main && team.Type != TeamType.Main)
+                if (request.Type.Value != TeamType.Unassigned && team.AreaId.HasValue)
                 {
-                    if (areaTeams.Any(t => t.Type == TeamType.Main && t.TeamId != teamId))
+                    var areaTeams = await _unitOfWork.Teams.GetByAreaIdAsync(team.AreaId.Value);
+                    if (request.Type.Value == TeamType.Main && team.Type != TeamType.Main)
                     {
-                        throw new BusinessRuleException("Khu vực này đã có đội chính.");
+                        if (areaTeams.Any(t => t.Type == TeamType.Main && t.TeamId != teamId))
+                        {
+                            throw new BusinessRuleException("Khu vực này đã có đội chính.");
+                        }
                     }
-                }
-                else if (request.Type.Value == TeamType.Support && team.Type != TeamType.Support)
-                {
-                    if (areaTeams.Any(t => t.Type == TeamType.Support && t.TeamId != teamId))
+                    else if (request.Type.Value == TeamType.Support && team.Type != TeamType.Support)
                     {
-                        throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
+                        if (areaTeams.Any(t => t.Type == TeamType.Support && t.TeamId != teamId))
+                        {
+                            throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
+                        }
                     }
                 }
                 team.Type = request.Type.Value;
@@ -286,7 +309,7 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
             return result;
         }
 
-        public async Task AssignTeamToAreaAsync(int teamId, int areaId)
+        public async Task AssignTeamToAreaAsync(int teamId, int areaId, TeamType type)
         {
             var team = await _unitOfWork.Teams.GetByIdAsync(teamId);
             if (team == null)
@@ -296,22 +319,29 @@ namespace WasteCollectionPlatform.Business.Services.Implementations
             if (area == null)
                 throw new KeyNotFoundException($"Area {areaId} không tồn tại.");
 
+            if (type == TeamType.Unassigned)
+            {
+                throw new BusinessRuleException("Không thể gán đội vào khu vực với loại 'Chưa gán'. Vui lòng chọn Đội chính hoặc Đội hỗ trợ.");
+            }
+
             var areaTeams = await _unitOfWork.Teams.GetByAreaIdAsync(areaId);
-            if (team.Type == TeamType.Main)
+            if (type == TeamType.Main)
             {
                 if (areaTeams.Any(t => t.Type == TeamType.Main && t.TeamId != teamId))
                 {
                     throw new BusinessRuleException("Khu vực này đã có đội chính.");
                 }
             }
-            else if (team.Type == TeamType.Support)
+            else if (type == TeamType.Support)
             {
                 if (areaTeams.Any(t => t.Type == TeamType.Support && t.TeamId != teamId))
                 {
                     throw new BusinessRuleException("Khu vực này đã có đội hỗ trợ.");
                 }
             }
+
             team.AreaId = areaId;
+            team.Type = type;
             await _unitOfWork.Teams.UpdateAsync(team);
             await _unitOfWork.SaveChangesAsync();
         }

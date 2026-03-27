@@ -639,9 +639,10 @@ public async Task<bool> DeleteAsync(int id)
 
         // Notify Leader
         var area = await _areaRepo.GetByIdAsync(report.AreaId);
+        string areaName = area?.Name ?? "khu vực được gán";
         await _notificationService.SendNotificationAsync(
             leader.UserId,
-            $"Nhiệm vụ mới: Thu gom rác tại khu vực {area?.Name}. Vui lòng xử lý vào thời gian sớm nhất.",
+            $"Nhiệm vụ mới: Thu gom rác tại {areaName}. Vui lòng xử lý vào thời gian sớm nhất.",
             report.ReportId);
     }
 
@@ -694,6 +695,7 @@ public async Task<bool> DeleteAsync(int id)
         }
 
         report.Status = ReportStatus.ReportedByTeam;
+        report.CollectorNote = note;
         
         await _wasteReportRepo.UpdateAsync(report);
         await _unitOfWork.SaveChangesAsync();
@@ -737,6 +739,17 @@ public async Task<bool> DeleteAsync(int id)
                 citizen.UserId,
                 $"Tin vui! Báo cáo rác của bạn (#{report.ReportId}) đã được thu gom thành công. Bạn nhận được {points} điểm tích lũy.",
                 report.ReportId);
+
+            // Notify Team Leader
+            var collectors = await _teamService.GetCollectorsByTeamIdAsync(report.TeamId!.Value);
+            var leader = collectors.FirstOrDefault(c => c.Role == "Leader");
+            if (leader != null)
+            {
+                await _notificationService.SendNotificationAsync(
+                    leader.UserId,
+                    $"Tuyệt vời! Báo cáo hoàn thành cho nhiệm vụ #{report.ReportId} đã được Admin phê duyệt. Cảm ơn đội ngũ của bạn!",
+                    report.ReportId);
+            }
         }
         else
         {
