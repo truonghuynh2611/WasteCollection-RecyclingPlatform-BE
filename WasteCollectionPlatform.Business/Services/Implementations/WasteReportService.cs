@@ -769,5 +769,29 @@ public async Task<bool> DeleteAsync(int id)
         await _wasteReportRepo.UpdateAsync(report);
         await _unitOfWork.SaveChangesAsync();
     }
+
+    public async Task RejectReportAsync(int reportId, string reason)
+    {
+        var report = await _wasteReportRepo.GetByIdAsync(reportId);
+        if (report == null) throw new KeyNotFoundException("Report not found");
+
+        if (report.Status != ReportStatus.Pending && report.Status != ReportStatus.Accepted)
+            throw new BusinessRuleException("Báo cáo không ở trạng thái có thể từ chối.");
+
+        report.Status = ReportStatus.Failed;
+        
+        await _wasteReportRepo.UpdateAsync(report);
+        await _unitOfWork.SaveChangesAsync();
+
+        // Notify Citizen
+        var citizen = await _citizenRepo.GetByIdAsync(report.CitizenId);
+        if (citizen != null)
+        {
+            await _notificationService.SendNotificationAsync(
+                citizen.UserId,
+                $"Báo cáo rác của bạn (#{reportId}) đã bị từ chối. Lý do: {reason}",
+                reportId);
+        }
+    }
 }
 

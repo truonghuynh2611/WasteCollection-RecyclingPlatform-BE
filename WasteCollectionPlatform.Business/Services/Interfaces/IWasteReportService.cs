@@ -30,5 +30,6 @@ public interface IWasteReportService
     Task ApproveAndAssignToMainTeamAsync(int reportId);
     Task SubmitCompletionEvidenceAsync(int reportId, int leaderId, Microsoft.AspNetCore.Http.IFormFileCollection? imageFiles, List<string>? imageUrls, string? note);
     Task VerifyAndFinalizeReportAsync(int reportId, bool isApproved, string? adminNote);
+    Task RejectReportAsync(int reportId, string reason);
 }
 
