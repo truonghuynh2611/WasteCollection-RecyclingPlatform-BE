@@ -188,6 +188,29 @@ public class WasteReportController : ControllerBase
         }
     }
 
+    [HttpPost("{id}/reject")]
+    public async Task<IActionResult> RejectReport(int id, [FromBody] RejectReportDto dto)
+    {
+        try
+        {
+            await _wasteReportService.RejectReportAsync(id, dto.Reason);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Báo cáo đã bị từ chối thành công."));
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rejecting report {ReportId}", id);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
     [HttpPost("verify-completion")]
     public async Task<IActionResult> VerifyCompletion([FromBody] VerifyCompletionDto dto)
     {
